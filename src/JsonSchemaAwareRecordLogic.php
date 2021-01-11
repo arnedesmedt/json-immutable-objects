@@ -141,9 +141,13 @@ trait JsonSchemaAwareRecordLogic
         return JsonSchema::nullOr($schema);
     }
 
-    private static function docBlockForProperty(string $propertyName): DocBlock
+    private static function docBlockForProperty(string $propertyName): ?DocBlock
     {
         $reflectionProperty = (new ReflectionClass(static::class))->getProperty($propertyName);
+
+        if (! $reflectionProperty->getDocComment()) {
+            return null;
+        }
 
         return DocBlockFactory::createInstance()->create($reflectionProperty);
     }
@@ -151,6 +155,10 @@ trait JsonSchemaAwareRecordLogic
     private static function propertyDescription(string $propertyName): ?string
     {
         $docBlock = self::docBlockForProperty($propertyName);
+
+        if ($docBlock === null) {
+            return null;
+        }
 
         $summary = $docBlock->getSummary();
         $description = $docBlock->getDescription()->render();
@@ -188,7 +196,7 @@ trait JsonSchemaAwareRecordLogic
         }
 
         $docBlock = self::docBlockForProperty($propertyName);
-        $docBlockExamples = $docBlock->getTagsByName('example');
+        $docBlockExamples = $docBlock ? $docBlock->getTagsByName('example') : null;
 
         if (! empty($docBlockExamples)) {
             return array_map(
