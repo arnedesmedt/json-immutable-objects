@@ -175,7 +175,7 @@ trait JsonSchemaAwareRecordLogic
      */
     private static function propertyExamples(string $propertyName): ?array
     {
-        $examplesPerProperty = self::examples();
+        $examplesPerProperty = self::allExamples();
 
         if ($examplesPerProperty[$propertyName] ?? false) {
             $example = $examplesPerProperty[$propertyName];
@@ -240,7 +240,7 @@ trait JsonSchemaAwareRecordLogic
     /**
      * @return array<mixed>
      */
-    private static function examples(): array
+    private static function allExamples(): array
     {
         if ((new ReflectionClass(static::class))->implementsInterface(HasPropertyExamples::class)) {
             return static::examples();
