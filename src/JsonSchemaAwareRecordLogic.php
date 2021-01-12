@@ -256,4 +256,9 @@ trait JsonSchemaAwareRecordLogic
 
         return [];
     }
+
+    private static function __allowNestedSchema(): bool
+    {
+        return true;
+    }
 }
