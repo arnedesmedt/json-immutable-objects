@@ -85,10 +85,10 @@ trait JsonSchemaAwareRecordLogic
                 $properties[$propertyName] = $property;
             }
 
-            $properties = array_diff_key($properties, $optionalProperties);
+            $propertiesWithoutOptional = array_diff_key($properties, $optionalProperties);
             $optionalProperties = array_intersect_key($properties, $optionalProperties);
 
-            self::$__schema = JsonSchema::object($properties, $optionalProperties);
+            self::$__schema = JsonSchema::object($propertiesWithoutOptional, $optionalProperties);
         }
 
         return self::$__schema;
@@ -227,6 +227,10 @@ trait JsonSchemaAwareRecordLogic
             $optionalPropertyName = $hasDefault
                 ? $defaultPropertyNameOrKey
                 : $optionalPropertyNameOrDefault;
+
+            if ($propertyName !== $optionalPropertyName) {
+                continue;
+            }
 
             $optionalProperties[$optionalPropertyName] = null;
 
