@@ -78,7 +78,7 @@ trait JsonSchemaAwareRecordLogic
 
                 $default = self::propertyDefault($propertyName, $optionalProperties);
 
-                if ($default) {
+                if ($default !== null) {
                     $property = $property->withDefault($default);
                 }
 
