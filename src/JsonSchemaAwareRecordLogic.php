@@ -76,7 +76,7 @@ trait JsonSchemaAwareRecordLogic
                     $property = $property->withExamples(...$examples);
                 }
 
-                $default = self::propertyDefault($propertyName, $optionalProperties);
+                $default = self::propertyDefault($propertyName);
 
                 if ($default !== null) {
                     $property = $property->withDefault($default);
@@ -85,8 +85,8 @@ trait JsonSchemaAwareRecordLogic
                 $properties[$propertyName] = $property;
             }
 
-            $propertiesWithoutOptional = array_diff_key($properties, $optionalProperties);
-            $optionalProperties = array_intersect_key($properties, $optionalProperties);
+            $propertiesWithoutOptional = array_diff_key($properties, self::__optionalProperties());
+            $optionalProperties = array_intersect_key($properties, self::__optionalProperties());
 
             self::$__schema = JsonSchema::object($propertiesWithoutOptional, $optionalProperties);
         }
@@ -215,7 +215,7 @@ trait JsonSchemaAwareRecordLogic
      *
      * @return mixed|null
      */
-    private static function propertyDefault(string $propertyName, array &$optionalProperties)
+    private static function propertyDefault(string $propertyName)
     {
         $defaultProperties = array_merge(
             (new ReflectionClass(static::class))->getDefaultProperties(),
@@ -231,8 +231,6 @@ trait JsonSchemaAwareRecordLogic
             if ($propertyName !== $optionalPropertyName) {
                 continue;
             }
-
-            $optionalProperties[$optionalPropertyName] = null;
 
             if (! $hasDefault) {
                 return null;
