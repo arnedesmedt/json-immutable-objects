@@ -18,14 +18,18 @@ use ReflectionClass;
 
 use function array_diff_key;
 use function array_filter;
+use function array_flip;
 use function array_intersect_key;
 use function array_key_exists;
 use function array_map;
 use function array_merge;
 use function count;
 use function implode;
+use function in_array;
 use function is_string;
 use function sprintf;
+
+use const ARRAY_FILTER_USE_KEY;
 
 trait JsonSchemaAwareRecordLogic
 {
@@ -51,6 +55,7 @@ trait JsonSchemaAwareRecordLogic
         if (self::$__schema === null) {
             $properties = [];
             $optionalProperties = [];
+            $defaultProperties = self::defaultProperties();
 
             foreach (self::$__propTypeMap as $propertyName => [$type, $isScalar, $isNullable]) {
                 $properties[$propertyName] = $property = self::baseProperty(
@@ -76,7 +81,7 @@ trait JsonSchemaAwareRecordLogic
                     $property = $property->withExamples(...$examples);
                 }
 
-                $default = self::propertyDefault($propertyName);
+                $default = self::propertyDefault($propertyName, $defaultProperties);
 
                 if ($default !== null) {
                     $property = $property->withDefault($default);
@@ -85,8 +90,9 @@ trait JsonSchemaAwareRecordLogic
                 $properties[$propertyName] = $property;
             }
 
-            $propertiesWithoutOptional = array_diff_key($properties, self::__optionalProperties());
-            $optionalProperties = array_intersect_key($properties, self::__optionalProperties());
+            $optionalProperties = array_flip(self::__optionalProperties());
+            $propertiesWithoutOptional = array_diff_key($properties, $optionalProperties);
+            $optionalProperties = array_intersect_key($properties, $optionalProperties);
 
             self::$__schema = JsonSchema::object($propertiesWithoutOptional, $optionalProperties);
         }
@@ -211,17 +217,12 @@ trait JsonSchemaAwareRecordLogic
     }
 
     /**
-     * @param array<string> $optionalProperties
+     * @param array<string|int, mixed> $defaultProperties
      *
      * @return mixed|null
      */
-    private static function propertyDefault(string $propertyName)
+    private static function propertyDefault(string $propertyName, array $defaultProperties)
     {
-        $defaultProperties = array_merge(
-            (new ReflectionClass(static::class))->getDefaultProperties(),
-            self::__optionalProperties()
-        );
-
         foreach ($defaultProperties as $defaultPropertyNameOrKey => $optionalPropertyNameOrDefault) {
             $hasDefault = is_string($defaultPropertyNameOrKey);
             $optionalPropertyName = $hasDefault
@@ -256,6 +257,35 @@ trait JsonSchemaAwareRecordLogic
             return static::examples();
         }
 
+        return [];
+    }
+
+    /**
+     * @return array<string|int, mixed>
+     */
+    private static function defaultProperties(): array
+    {
+        $metadataProperties = [
+            '__propTypeMap',
+            '__schema',
+            '__arrayPropItemTypeMap',
+        ];
+
+        return array_filter(
+            array_merge(
+                (new ReflectionClass(static::class))->getDefaultProperties(),
+                self::__defaultProperties()
+            ),
+            static fn ($key) => is_string($key) && ! in_array($key, $metadataProperties),
+            ARRAY_FILTER_USE_KEY
+        );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function __defaultProperties(): array
+    {
         return [];
     }
 
