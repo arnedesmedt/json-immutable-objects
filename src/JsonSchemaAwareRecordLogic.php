@@ -245,7 +245,7 @@ trait JsonSchemaAwareRecordLogic
 
     private static function getTypeFromClass(string $classOrType): Type
     {
-        return TypeDetector::getTypeFromClass($classOrType, self::__allowNestedSchema(), $_GET['complex'] ?? false);
+        return TypeDetector::getTypeFromClass($classOrType, self::__allowNestedSchema(), isset($_GET['complex']));
     }
 
     /**
