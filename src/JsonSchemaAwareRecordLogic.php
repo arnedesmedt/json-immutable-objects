@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ADS\JsonImmutableObjects;
 
-use _HumbugBox985cd1594210\Symfony\Component\Console\Exception\LogicException;
 use ADS\ValueObjects\Implementation\TypeDetector;
 use ADS\ValueObjects\ValueObject;
 use EventEngine\Data\ImmutableRecord;
@@ -12,6 +11,7 @@ use EventEngine\JsonSchema\AnnotatedType;
 use EventEngine\JsonSchema\Exception\InvalidArgumentException;
 use EventEngine\JsonSchema\JsonSchema;
 use EventEngine\JsonSchema\Type;
+use LogicException;
 use phpDocumentor\Reflection\DocBlock;
 use phpDocumentor\Reflection\DocBlock\Tags\Generic;
 use phpDocumentor\Reflection\DocBlockFactory;
