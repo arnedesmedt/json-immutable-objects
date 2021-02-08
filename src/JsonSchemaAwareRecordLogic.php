@@ -21,6 +21,7 @@ use function array_filter;
 use function array_flip;
 use function array_intersect_key;
 use function array_key_exists;
+use function array_keys;
 use function array_map;
 use function array_merge;
 use function count;
@@ -265,18 +266,14 @@ trait JsonSchemaAwareRecordLogic
      */
     private static function defaultProperties(): array
     {
-        $metadataProperties = [
-            '__propTypeMap',
-            '__schema',
-            '__arrayPropItemTypeMap',
-        ];
+        $propertyNames = array_keys(self::buildPropTypeMap());
 
         return array_filter(
             array_merge(
                 (new ReflectionClass(static::class))->getDefaultProperties(),
                 self::__defaultProperties()
             ),
-            static fn ($key) => is_string($key) && ! in_array($key, $metadataProperties),
+            static fn ($key) => in_array($key, $propertyNames),
             ARRAY_FILTER_USE_KEY
         );
     }
