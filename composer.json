@@ -15,7 +15,8 @@
         "php": "^7.4",
         "arnedesmedt/value-objects": "^0.1",
         "event-engine/php-json-schema": "2.0-beta.3",
-        "phpdocumentor/reflection-docblock": "^5.2"
+        "phpdocumentor/reflection-docblock": "^5.2",
+        "arnedesmedt/php-util": "^0.1"
     },
     "require-dev": {
         "phpro/grumphp": "1.*",

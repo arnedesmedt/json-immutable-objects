@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ADS\JsonImmutableObjects;
 
+use ADS\Util\ArrayUtil;
 use ADS\ValueObjects\Implementation\TypeDetector;
 use ADS\ValueObjects\ValueObject;
 use EventEngine\Data\ImmutableRecord;
@@ -15,6 +16,8 @@ use phpDocumentor\Reflection\DocBlock;
 use phpDocumentor\Reflection\DocBlock\Tags\Generic;
 use phpDocumentor\Reflection\DocBlockFactory;
 use ReflectionClass;
+use RuntimeException;
+use Throwable;
 
 use function array_diff_key;
 use function array_filter;
@@ -27,7 +30,6 @@ use function array_merge;
 use function count;
 use function implode;
 use function in_array;
-use function is_string;
 use function sprintf;
 
 use const ARRAY_FILTER_USE_KEY;
@@ -55,7 +57,6 @@ trait JsonSchemaAwareRecordLogic
 
         if (self::$__schema === null) {
             $properties = [];
-            $optionalProperties = [];
             $defaultProperties = self::defaultProperties();
 
             foreach (self::$__propTypeMap as $propertyName => [$type, $isScalar, $isNullable]) {
@@ -82,10 +83,11 @@ trait JsonSchemaAwareRecordLogic
                     $property = $property->withExamples(...$examples);
                 }
 
-                $default = self::propertyDefault($propertyName, $defaultProperties);
-
-                if ($default !== null) {
-                    $property = $property->withDefault($default);
+                try {
+                    $property = $property->withDefault(
+                        self::propertyDefault($propertyName, $defaultProperties)
+                    );
+                } catch (Throwable $exception) {
                 }
 
                 $properties[$propertyName] = $property;
@@ -218,30 +220,21 @@ trait JsonSchemaAwareRecordLogic
     }
 
     /**
-     * @param array<string|int, mixed> $defaultProperties
+     * @param array<string, mixed> $defaultProperties
      *
-     * @return mixed|null
+     * @return mixed
      */
     private static function propertyDefault(string $propertyName, array $defaultProperties)
     {
-        foreach ($defaultProperties as $defaultPropertyNameOrKey => $optionalPropertyNameOrDefault) {
-            $hasDefault = is_string($defaultPropertyNameOrKey);
-            $optionalPropertyName = $hasDefault
-                ? $defaultPropertyNameOrKey
-                : $optionalPropertyNameOrDefault;
-
-            if ($propertyName !== $optionalPropertyName) {
-                continue;
-            }
-
-            if (! $hasDefault) {
-                return null;
-            }
-
-            return $optionalPropertyNameOrDefault instanceof ValueObject ?
-                $optionalPropertyNameOrDefault->toValue() :
-                $optionalPropertyNameOrDefault;
+        if (! isset($defaultProperties[$propertyName])) {
+            throw new RuntimeException('default property not set.');
         }
+
+        $default = $defaultProperties[$propertyName];
+
+        return $default instanceof ValueObject ?
+            $default->toValue() :
+            $default;
     }
 
     private static function getTypeFromClass(string $classOrType): Type
@@ -262,16 +255,27 @@ trait JsonSchemaAwareRecordLogic
     }
 
     /**
-     * @return array<string|int, mixed>
+     * @return array<string, mixed>
      */
     private static function defaultProperties(): array
     {
         $propertyNames = array_keys(self::buildPropTypeMap());
+        $defaultProperties = self::__defaultProperties();
+
+        if (! ArrayUtil::isAssociative($defaultProperties)) {
+            throw new RuntimeException(
+                sprintf(
+                    'The __defaultProperties method from \'%s\', should be an associative array ' .
+                    'where the key is the property and the value is the default value.',
+                    static::class
+                )
+            );
+        }
 
         return array_filter(
             array_merge(
                 (new ReflectionClass(static::class))->getDefaultProperties(),
-                self::__defaultProperties()
+                $defaultProperties
             ),
             static fn ($key) => in_array($key, $propertyNames),
             ARRAY_FILTER_USE_KEY
