@@ -262,7 +262,7 @@ trait JsonSchemaAwareRecordLogic
         $propertyNames = array_keys(self::buildPropTypeMap());
         $defaultProperties = self::__defaultProperties();
 
-        if (! ArrayUtil::isAssociative($defaultProperties)) {
+        if (! empty($defaultProperties) && ! ArrayUtil::isAssociative($defaultProperties)) {
             throw new RuntimeException(
                 sprintf(
                     'The __defaultProperties method from \'%s\', should be an associative array ' .
