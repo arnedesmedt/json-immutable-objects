@@ -224,7 +224,7 @@ trait JsonSchemaAwareRecordLogic
      *
      * @return mixed
      */
-    private static function propertyDefault(string $propertyName, array $defaultProperties)
+    public static function propertyDefault(string $propertyName, array $defaultProperties)
     {
         if (! isset($defaultProperties[$propertyName])) {
             throw new RuntimeException('default property not set.');
