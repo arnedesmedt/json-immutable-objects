@@ -257,7 +257,7 @@ trait JsonSchemaAwareRecordLogic
     /**
      * @return array<string, mixed>
      */
-    private static function defaultProperties(): array
+    public static function defaultProperties(): array
     {
         $propertyNames = array_keys(self::buildPropTypeMap());
         $defaultProperties = self::__defaultProperties();
