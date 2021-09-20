@@ -13,6 +13,8 @@ use function preg_match;
 
 trait DefaultImmutableProperties
 {
+    use JsonSchemaAwareRecordLogic;
+
     private function init(): void
     {
         // phpcs:ignore Squiz.NamingConventions.ValidVariableName.NotCamelCaps
