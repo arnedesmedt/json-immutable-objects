@@ -49,6 +49,7 @@ trait DefaultImmutableProperties
             }
         }
 
-        self::$useMaxValues = false;
+        // phpcs:ignore Squiz.NamingConventions.ValidVariableName.NotCamelCaps
+        self::$__useMaxValues = false;
     }
 }
