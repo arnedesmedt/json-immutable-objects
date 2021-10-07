@@ -39,6 +39,7 @@ trait JsonSchemaAwareRecordLogic
 {
     use \EventEngine\JsonSchema\JsonSchemaAwareRecordLogic {
         fromArray as parentFromArray;
+        buildPropTypeMap as parentBuildPropTypeMap;
     }
 
     private static bool $useMaxValues = false;
@@ -315,5 +316,16 @@ trait JsonSchemaAwareRecordLogic
         }
 
         return self::parentFromArray($nativeData);
+    }
+
+    /**
+     * @return array<mixed>
+     */
+    private static function buildPropTypeMap(): array
+    {
+        $propTypeMap = self::parentBuildPropTypeMap();
+        unset($propTypeMap['useMaxValues']);
+
+        return $propTypeMap;
     }
 }
