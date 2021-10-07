@@ -42,7 +42,8 @@ trait JsonSchemaAwareRecordLogic
         buildPropTypeMap as parentBuildPropTypeMap;
     }
 
-    private static bool $useMaxValues = false;
+    // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
+    private static bool $__useMaxValues = false;
 
     /**
      * @param array<mixed> $arrayPropTypeMap
@@ -311,7 +312,7 @@ trait JsonSchemaAwareRecordLogic
     public static function fromArray(array $nativeData, bool $useMaxValuesAsDefaults = false)
     {
         if ($useMaxValuesAsDefaults && is_callable([static::class, 'maxValues'])) {
-            static::$useMaxValues = true;
+            static::$__useMaxValues = true;
             $nativeData = array_merge(static::maxValues(), $nativeData);
         }
 
@@ -324,7 +325,7 @@ trait JsonSchemaAwareRecordLogic
     private static function buildPropTypeMap(): array
     {
         $propTypeMap = self::parentBuildPropTypeMap();
-        unset($propTypeMap['useMaxValues']);
+        unset($propTypeMap['__useMaxValues']);
 
         return $propTypeMap;
     }
