@@ -30,13 +30,18 @@ use function array_merge;
 use function count;
 use function implode;
 use function in_array;
+use function is_callable;
 use function sprintf;
 
 use const ARRAY_FILTER_USE_KEY;
 
 trait JsonSchemaAwareRecordLogic
 {
-    use \EventEngine\JsonSchema\JsonSchemaAwareRecordLogic;
+    use \EventEngine\JsonSchema\JsonSchemaAwareRecordLogic {
+        fromArray as parentFromArray;
+    }
+
+    private static bool $useMaxValues = false;
 
     /**
      * @param array<mixed> $arrayPropTypeMap
@@ -293,5 +298,18 @@ trait JsonSchemaAwareRecordLogic
     private static function __allowNestedSchema(): bool
     {
         return true;
+    }
+
+    /**
+     * @param array<mixed> $nativeData
+     */
+    public static function fromArray(array $nativeData, bool $useMaxValuesAsDefaults = false): self
+    {
+        if ($useMaxValuesAsDefaults && is_callable([static::class, 'maxValues'])) {
+            static::$useMaxValues = true;
+            $nativeData = array_merge(static::maxValues(), $nativeData);
+        }
+
+        return parent::parentFromArray($nativeData);
     }
 }

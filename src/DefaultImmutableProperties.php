@@ -40,7 +40,7 @@ trait DefaultImmutableProperties
             }
 
             try {
-                $this->{$specialKey} = $type::fromArray([]);
+                $this->{$specialKey} = $type::fromArray([], self::$useMaxValues);
             } catch (InvalidArgumentException $exception) {
                 if (! preg_match('/^Missing record data for key/', $exception->getMessage())) {
                     throw $exception;
