@@ -40,7 +40,8 @@ trait DefaultImmutableProperties
             }
 
             try {
-                $this->{$specialKey} = $type::fromArray([], self::$useMaxValues);
+                // phpcs:ignore Squiz.NamingConventions.ValidVariableName.NotCamelCaps
+                $this->{$specialKey} = $type::fromArray([], self::$__useMaxValues);
             } catch (InvalidArgumentException $exception) {
                 if (! preg_match('/^Missing record data for key/', $exception->getMessage())) {
                     throw $exception;
