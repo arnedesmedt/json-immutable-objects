@@ -302,8 +302,12 @@ trait JsonSchemaAwareRecordLogic
 
     /**
      * @param array<mixed> $nativeData
+     *
+     * @return self
+     *
+     * @phpcsSuppress SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingNativeTypeHint
      */
-    public static function fromArray(array $nativeData, bool $useMaxValuesAsDefaults = false): self
+    public static function fromArray(array $nativeData, bool $useMaxValuesAsDefaults = false)
     {
         if ($useMaxValuesAsDefaults && is_callable([static::class, 'maxValues'])) {
             static::$useMaxValues = true;
