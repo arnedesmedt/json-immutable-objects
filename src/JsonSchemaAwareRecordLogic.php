@@ -314,6 +314,6 @@ trait JsonSchemaAwareRecordLogic
             $nativeData = array_merge(static::maxValues(), $nativeData);
         }
 
-        return parent::parentFromArray($nativeData);
+        return self::parentFromArray($nativeData);
     }
 }
