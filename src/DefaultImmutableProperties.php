@@ -42,13 +42,12 @@ trait DefaultImmutableProperties
             try {
                 $this->{$specialKey} = $type::fromArray([], self::$useMaxValues);
             } catch (InvalidArgumentException $exception) {
-                self::$useMaxValues = false;
                 if (! preg_match('/^Missing record data for key/', $exception->getMessage())) {
                     throw $exception;
                 }
             }
-
-            self::$useMaxValues = false;
         }
+
+        self::$useMaxValues = false;
     }
 }
