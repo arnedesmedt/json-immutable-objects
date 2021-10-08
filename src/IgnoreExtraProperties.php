@@ -9,7 +9,7 @@ use function array_intersect_key;
 trait IgnoreExtraProperties
 {
     use DefaultImmutableProperties {
-        fromArray as parentFromArray;
+        fromArray as grandParentFromArray;
     }
 
     /**
@@ -21,7 +21,7 @@ trait IgnoreExtraProperties
      */
     public static function fromArray(array $nativeData, bool $useMaxValuesAsDefaults = false)
     {
-        return self::parentFromArray(
+        return self::grandParentFromArray(
             array_intersect_key($nativeData, self::buildPropTypeMap()),
             $useMaxValuesAsDefaults
         );
