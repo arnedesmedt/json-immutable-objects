@@ -8,6 +8,7 @@ use EventEngine\Data\ImmutableRecord;
 use EventEngine\Data\SpecialKeySupport;
 use InvalidArgumentException;
 use ReflectionClass;
+use ReflectionException;
 
 use function preg_match;
 
@@ -33,7 +34,11 @@ trait DefaultImmutableProperties
                 continue;
             }
 
-            $reflectionType = new ReflectionClass($type);
+            try {
+                $reflectionType = new ReflectionClass($type);
+            } catch (ReflectionException $e) {
+                continue;
+            }
 
             if (! $reflectionType->implementsInterface(ImmutableRecord::class)) {
                 continue;
