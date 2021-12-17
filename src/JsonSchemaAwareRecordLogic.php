@@ -1,10 +1,14 @@
 <?php
 
+//phpcs:disable Squiz.NamingConventions.ValidVariableName.MemberNotCamelCaps
+
+
 declare(strict_types=1);
 
 namespace ADS\JsonImmutableObjects;
 
 use ADS\Util\ArrayUtil;
+use ADS\Util\StringUtil;
 use ADS\ValueObjects\Implementation\TypeDetector;
 use ADS\ValueObjects\ValueObject;
 use EventEngine\Data\ImmutableRecord;
@@ -217,7 +221,7 @@ trait JsonSchemaAwareRecordLogic
         if (! empty($docBlockExamples)) {
             return array_map(
                 static function (Generic $generic) {
-                    return Util::castFromString($generic->getDescription()->render());
+                    return StringUtil::castFromString($generic->getDescription()->render());
                 },
                 $docBlockExamples
             );
@@ -228,10 +232,8 @@ trait JsonSchemaAwareRecordLogic
 
     /**
      * @param array<string, mixed> $defaultProperties
-     *
-     * @return mixed
      */
-    public static function propertyDefault(string $propertyName, array $defaultProperties)
+    public static function propertyDefault(string $propertyName, array $defaultProperties): mixed
     {
         if (! isset($defaultProperties[$propertyName])) {
             throw new RuntimeException('default property not set.');
