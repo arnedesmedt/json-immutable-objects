@@ -1,5 +1,8 @@
 <?php
 
+//phpcs:disable Squiz.NamingConventions.ValidVariableName.MemberNotCamelCaps
+
+
 declare(strict_types=1);
 
 namespace ADS\JsonImmutableObjects;
@@ -36,7 +39,7 @@ trait DefaultImmutableProperties
 
             try {
                 $reflectionType = new ReflectionClass($type);
-            } catch (ReflectionException $e) {
+            } catch (ReflectionException) {
                 continue;
             }
 

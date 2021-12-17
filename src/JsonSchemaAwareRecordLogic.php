@@ -98,7 +98,7 @@ trait JsonSchemaAwareRecordLogic
                     $property = $property->withDefault(
                         self::propertyDefault($propertyName, $defaultProperties)
                     );
-                } catch (Throwable $exception) {
+                } catch (Throwable) {
                 }
 
                 $properties[$propertyName] = $property;
@@ -220,9 +220,7 @@ trait JsonSchemaAwareRecordLogic
 
         if (! empty($docBlockExamples)) {
             return array_map(
-                static function (Generic $generic) {
-                    return StringUtil::castFromString($generic->getDescription()->render());
-                },
+                static fn (Generic $generic) => StringUtil::castFromString($generic->getDescription()->render()),
                 $docBlockExamples
             );
         }
