@@ -19,6 +19,7 @@ use EventEngine\JsonSchema\Type;
 use phpDocumentor\Reflection\DocBlock;
 use phpDocumentor\Reflection\DocBlock\Tags\Generic;
 use phpDocumentor\Reflection\DocBlockFactory;
+use PHPStan\Reflection\PropertyReflection;
 use ReflectionClass;
 use RuntimeException;
 use Throwable;
@@ -328,5 +329,20 @@ trait JsonSchemaAwareRecordLogic
         unset($propTypeMap['__useMaxValues']);
 
         return $propTypeMap;
+    }
+
+    public function isAlwaysRead(PropertyReflection $property, string $propertyName): bool
+    {
+        return true;
+    }
+
+    public function isAlwaysWritten(PropertyReflection $property, string $propertyName): bool
+    {
+        return true;
+    }
+
+    public function isInitialized(PropertyReflection $property, string $propertyName): bool
+    {
+        return array_key_exists($propertyName, static::defaultProperties());
     }
 }
