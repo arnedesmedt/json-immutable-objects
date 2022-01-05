@@ -23,7 +23,7 @@ trait DefaultImmutableProperties
     {
         // phpcs:ignore Squiz.NamingConventions.ValidVariableName.NotCamelCaps
         foreach (self::$__propTypeMap as $key => [$type, $isNative, $isNullable]) {
-            if ($isNullable || $isNative) {
+            if ($isNative) {
                 continue;
             }
 
@@ -51,7 +51,9 @@ trait DefaultImmutableProperties
                 // phpcs:ignore Squiz.NamingConventions.ValidVariableName.NotCamelCaps
                 $this->{$specialKey} = $type::fromArray([], self::$__useMaxValues);
             } catch (InvalidArgumentException $exception) {
-                if (! preg_match('/^Missing record data for key/', $exception->getMessage())) {
+                if ($isNullable) {
+                    $this->{$specialKey} = null;
+                } elseif (! preg_match('/^Missing record data for key/', $exception->getMessage())) {
                     throw $exception;
                 }
             }
