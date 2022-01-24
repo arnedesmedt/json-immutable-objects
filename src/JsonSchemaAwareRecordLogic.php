@@ -98,7 +98,7 @@ trait JsonSchemaAwareRecordLogic
                     $property = $property->withDefault(
                         self::propertyDefault($propertyName, $defaultProperties)
                     );
-                } catch (Throwable) {
+                } catch (Throwable $e) {
                 }
 
                 $properties[$propertyName] = $property;
@@ -230,8 +230,12 @@ trait JsonSchemaAwareRecordLogic
 
     /**
      * @param array<string, mixed> $defaultProperties
+     *
+     * @return mixed
+     *
+     * @phpcsSuppress SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingNativeTypeHint
      */
-    public static function propertyDefault(string $propertyName, array $defaultProperties): mixed
+    public static function propertyDefault(string $propertyName, array $defaultProperties)
     {
         if (! isset($defaultProperties[$propertyName])) {
             throw new RuntimeException('default property not set.');

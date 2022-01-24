@@ -39,7 +39,7 @@ trait DefaultImmutableProperties
 
             try {
                 $reflectionType = new ReflectionClass($type);
-            } catch (ReflectionException) {
+            } catch (ReflectionException $e) {
                 continue;
             }
 
