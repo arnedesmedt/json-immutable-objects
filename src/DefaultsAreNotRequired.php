@@ -8,8 +8,6 @@ use function array_keys;
 
 trait DefaultsAreNotRequired
 {
-    use JsonSchemaAwareRecordLogic;
-
     /**
      * @return array<string>
      *

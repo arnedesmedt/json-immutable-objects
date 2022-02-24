@@ -8,7 +8,7 @@ use function array_intersect_key;
 
 trait IgnoreExtraProperties
 {
-    use DefaultImmutableProperties {
+    use JsonSchemaAwareRecordLogic {
         fromArray as grandParentFromArray;
     }
 
