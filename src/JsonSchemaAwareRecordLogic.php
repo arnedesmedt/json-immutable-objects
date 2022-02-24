@@ -12,6 +12,7 @@ use ADS\Util\StringUtil;
 use ADS\ValueObjects\Implementation\TypeDetector;
 use ADS\ValueObjects\ValueObject;
 use EventEngine\Data\ImmutableRecord;
+use EventEngine\Data\SpecialKeySupport;
 use EventEngine\JsonSchema\AnnotatedType;
 use EventEngine\JsonSchema\Exception\InvalidArgumentException;
 use EventEngine\JsonSchema\JsonSchema;
@@ -35,6 +36,7 @@ use function count;
 use function implode;
 use function in_array;
 use function is_callable;
+use function preg_match;
 use function sprintf;
 
 use const ARRAY_FILTER_USE_KEY;
@@ -232,8 +234,6 @@ trait JsonSchemaAwareRecordLogic
      * @param array<string, mixed> $defaultProperties
      *
      * @return mixed
-     *
-     * @phpcsSuppress SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingNativeTypeHint
      */
     public static function propertyDefault(string $propertyName, array $defaultProperties)
     {
@@ -320,7 +320,13 @@ trait JsonSchemaAwareRecordLogic
             $nativeData = array_merge(static::maxValues(), $nativeData);
         }
 
-        return self::parentFromArray($nativeData);
+        $camelCasedNativeData = ArrayUtil::toCamelCasedKeys($nativeData);
+        $filteredCamelCasedNativeData = array_intersect_key(
+            $camelCasedNativeData,
+            self::buildPropTypeMap()
+        );
+
+        return self::parentFromArray($filteredCamelCasedNativeData);
     }
 
     /**
@@ -332,5 +338,59 @@ trait JsonSchemaAwareRecordLogic
         unset($propTypeMap['__useMaxValues']);
 
         return $propTypeMap;
+    }
+
+    /**
+     * @return array<string>
+     *
+     * @inheritDoc
+     */
+    private static function __optionalProperties(): array
+    {
+        return array_keys(self::defaultProperties());
+    }
+
+    private function init(): void
+    {
+        // phpcs:ignore Squiz.NamingConventions.ValidVariableName.NotCamelCaps
+        foreach (self::$__propTypeMap as $key => [$type, $isNative, $isNullable]) {
+            if ($isNative) {
+                continue;
+            }
+
+            $specialKey = $key;
+
+            if ($this instanceof SpecialKeySupport) {
+                $specialKey = $this->convertKeyForArray($key);
+            }
+
+            if (isset($this->{$specialKey})) {
+                continue;
+            }
+
+            try {
+                $reflectionType = new ReflectionClass($type);
+            } catch (ReflectionException $e) {
+                continue;
+            }
+
+            if (! $reflectionType->implementsInterface(ImmutableRecord::class)) {
+                continue;
+            }
+
+            try {
+                // phpcs:ignore Squiz.NamingConventions.ValidVariableName.NotCamelCaps
+                $this->{$specialKey} = $type::fromArray([], self::$__useMaxValues);
+            } catch (InvalidArgumentException $exception) {
+                if ($isNullable) {
+                    $this->{$specialKey} = null;
+                } elseif (! preg_match('/^Missing record data for key/', $exception->getMessage())) {
+                    throw $exception;
+                }
+            }
+        }
+
+        // phpcs:ignore Squiz.NamingConventions.ValidVariableName.NotCamelCaps
+        self::$__useMaxValues = false;
     }
 }
