@@ -14,13 +14,14 @@ use ADS\ValueObjects\ValueObject;
 use EventEngine\Data\ImmutableRecord;
 use EventEngine\Data\SpecialKeySupport;
 use EventEngine\JsonSchema\AnnotatedType;
-use EventEngine\JsonSchema\Exception\InvalidArgumentException;
 use EventEngine\JsonSchema\JsonSchema;
 use EventEngine\JsonSchema\Type;
+use InvalidArgumentException;
 use phpDocumentor\Reflection\DocBlock;
 use phpDocumentor\Reflection\DocBlock\Tags\Generic;
 use phpDocumentor\Reflection\DocBlockFactory;
 use ReflectionClass;
+use ReflectionException;
 use RuntimeException;
 use Throwable;
 
@@ -232,10 +233,8 @@ trait JsonSchemaAwareRecordLogic
 
     /**
      * @param array<string, mixed> $defaultProperties
-     *
-     * @return mixed
      */
-    public static function propertyDefault(string $propertyName, array $defaultProperties)
+    public static function propertyDefault(string $propertyName, array $defaultProperties): mixed
     {
         if (! isset($defaultProperties[$propertyName])) {
             throw new RuntimeException('default property not set.');
