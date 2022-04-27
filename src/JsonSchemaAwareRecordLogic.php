@@ -320,12 +320,26 @@ trait JsonSchemaAwareRecordLogic
         }
 
         $camelCasedNativeData = ArrayUtil::toCamelCasedKeys($nativeData);
-        $filteredCamelCasedNativeData = array_intersect_key(
+        $propTypeMap = self::buildPropTypeMap();
+
+        $filteredAllowedProperties = array_intersect_key(
             $camelCasedNativeData,
-            self::buildPropTypeMap()
+            $propTypeMap
         );
 
-        return self::parentFromArray($filteredCamelCasedNativeData);
+        $convertedValueObjects = array_map(
+            static function ($allowedProperty, string $key) use ($propTypeMap) {
+                [$name, $scalar, $allowNull] = $propTypeMap[$key];
+
+                return ! $allowedProperty instanceof ValueObject || ! $scalar
+                    ? $allowedProperty
+                    : $allowedProperty->toValue();
+            },
+            $filteredAllowedProperties,
+            array_keys($filteredAllowedProperties)
+        );
+
+        return self::parentFromArray($convertedValueObjects);
     }
 
     /**
