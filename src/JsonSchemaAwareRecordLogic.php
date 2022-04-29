@@ -327,19 +327,15 @@ trait JsonSchemaAwareRecordLogic
             $propTypeMap
         );
 
-        $convertedValueObjects = array_map(
-            static function ($allowedProperty, string $key) use ($propTypeMap) {
-                [$name, $scalar, $allowNull] = $propTypeMap[$key];
+        foreach ($filteredAllowedProperties as $key => $allowedProperty) {
+            [$name, $scalar, $allowNull] = $propTypeMap[$key];
 
-                return ! $allowedProperty instanceof ValueObject || ! $scalar
-                    ? $allowedProperty
-                    : $allowedProperty->toValue();
-            },
-            $filteredAllowedProperties,
-            array_keys($filteredAllowedProperties)
-        );
+            $filteredAllowedProperties[$key] =  ! $allowedProperty instanceof ValueObject || ! $scalar
+                ? $allowedProperty
+                : $allowedProperty->toValue();
+        }
 
-        return self::parentFromArray($convertedValueObjects);
+        return self::parentFromArray($filteredAllowedProperties);
     }
 
     /**
