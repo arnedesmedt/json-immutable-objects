@@ -328,11 +328,9 @@ trait JsonSchemaAwareRecordLogic
         );
 
         foreach ($filteredAllowedProperties as $key => $allowedProperty) {
-            [$name, $scalar, $allowNull] = $propTypeMap[$key];
-
-            $filteredAllowedProperties[$key] =  ! $allowedProperty instanceof ValueObject || ! $scalar
-                ? $allowedProperty
-                : $allowedProperty->toValue();
+            $filteredAllowedProperties[$key] =  $allowedProperty instanceof ValueObject
+                ? $allowedProperty->toValue()
+                : $allowedProperty;
         }
 
         return self::parentFromArray($filteredAllowedProperties);
