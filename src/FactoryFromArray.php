@@ -15,8 +15,10 @@ trait FactoryFromArray
 
     /**
      * @param array<string, mixed> $array
+     *
+     * @return mixed
      */
-    public static function fromArray(array $array): mixed
+    public static function fromArray(array $array)
     {
         return self::modelClass()::fromArray($array);
     }
