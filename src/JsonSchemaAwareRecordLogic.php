@@ -357,6 +357,14 @@ trait JsonSchemaAwareRecordLogic
         return array_keys(self::defaultProperties());
     }
 
+    /**
+     * @return array<string, string>
+     */
+    public static function __itemTypeMapping(): array
+    {
+        return static::arrayPropItemTypeMap();
+    }
+
     private function init(): void
     {
         // phpcs:ignore Squiz.NamingConventions.ValidVariableName.NotCamelCaps
