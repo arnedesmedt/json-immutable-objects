@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ADS\JsonImmutableObjects\Polymorphism;
 
 use ADS\JsonImmutableObjects\JsonSchemaAwareRecordLogic;
+use EventEngine\Data\ImmutableRecord;
 use EventEngine\JsonSchema\JsonSchema;
 use EventEngine\JsonSchema\JsonSchemaAwareRecord;
 use EventEngine\Schema\TypeSchema;
@@ -178,7 +179,7 @@ trait DiscriminatorLogic
         return $this->value->toArray();
     }
 
-    public function equals(JsonSchemaAwareRecord $other): bool
+    public function equals(ImmutableRecord $other): bool
     {
         return $this->value->equals($other);
     }
