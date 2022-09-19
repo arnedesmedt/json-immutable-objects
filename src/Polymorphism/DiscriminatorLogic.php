@@ -10,7 +10,9 @@ use EventEngine\JsonSchema\JsonSchemaAwareRecord;
 use EventEngine\Schema\TypeSchema;
 use InvalidArgumentException;
 use LogicException;
+use ReflectionClass;
 
+use function array_combine;
 use function array_filter;
 use function array_map;
 use function class_exists;
@@ -22,7 +24,7 @@ use function sprintf;
 
 /**
  * @method static string propertyName()
- * @method static array|null mapping()
+ * @method static array jsonSchemaAwareRecords()
  */
 trait DiscriminatorLogic
 {
@@ -33,6 +35,19 @@ trait DiscriminatorLogic
     }
 
     private JsonSchemaAwareRecord $value;
+
+    /**
+     * @return array<string, class-string<JsonSchemaAwareRecord>>|null
+     */
+    public static function mapping(): array
+    {
+        $keys = array_map(
+            static fn (string $model) => (new ReflectionClass($model))->getShortName(),
+            static::jsonSchemaAwareRecords(),
+        );
+
+        return array_combine($keys, static::jsonSchemaAwareRecords());
+    }
 
     /**
      * @inheritDoc
