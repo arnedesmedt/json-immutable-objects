@@ -30,7 +30,6 @@ use function sprintf;
 trait DiscriminatorLogic
 {
     use JsonSchemaAwareRecordLogic {
-        fromArray as parentFromArray;
         fromRecordData as parentFromRecordData;
         with as withParent;
     }
