@@ -16,6 +16,7 @@ use ReflectionClass;
 use function array_combine;
 use function array_filter;
 use function array_map;
+use function array_values;
 use function class_exists;
 use function class_implements;
 use function in_array;
@@ -191,10 +192,12 @@ trait DiscriminatorLogic
     public static function __schema(): TypeSchema
     {
         return JsonSchema::union(
-            ...array_filter(
-                array_map(
-                    static fn (string $class) => method_exists($class, '__schema') ? $class::__schema() : null,
-                    static::mapping()
+            ...array_values(
+                array_filter(
+                    array_map(
+                        static fn (string $class) => method_exists($class, '__schema') ? $class::__schema() : null,
+                        static::mapping()
+                    )
                 )
             )
         );
