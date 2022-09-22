@@ -36,6 +36,11 @@ trait DiscriminatorLogic
 
     private JsonSchemaAwareRecord $value;
 
+    public function value(): JsonSchemaAwareRecord
+    {
+        return $this->value;
+    }
+
     /**
      * @return array<string, class-string<JsonSchemaAwareRecord>>|null
      */
