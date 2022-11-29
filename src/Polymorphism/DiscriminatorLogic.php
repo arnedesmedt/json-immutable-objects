@@ -8,6 +8,7 @@ use ADS\JsonImmutableObjects\JsonSchemaAwareRecordLogic;
 use EventEngine\Data\ImmutableRecord;
 use EventEngine\JsonSchema\JsonSchema;
 use EventEngine\JsonSchema\JsonSchemaAwareRecord;
+use EventEngine\JsonSchema\Type\StringType;
 use EventEngine\Schema\TypeSchema;
 use InvalidArgumentException;
 use LogicException;
@@ -15,6 +16,7 @@ use ReflectionClass;
 
 use function array_combine;
 use function array_filter;
+use function array_keys;
 use function array_map;
 use function array_values;
 use function class_exists;
@@ -195,8 +197,25 @@ trait DiscriminatorLogic
             ...array_values(
                 array_filter(
                     array_map(
-                        static fn (string $class) => method_exists($class, '__schema') ? $class::__schema() : null,
-                        static::mapping()
+                        static function (string $discriminatorValue, string $class) {
+                            if (! method_exists($class, '__schema')) {
+                                return null;
+                            }
+
+                            $schema = $class::__schema();
+
+                            return $schema->withMergedRequiredProps(
+                                [
+                                    static::propertyName() => new StringType(
+                                        [
+                                            StringType::ENUM => [$discriminatorValue],
+                                        ]
+                                    ),
+                                ]
+                            );
+                        },
+                        array_keys(static::mapping()),
+                        static::mapping(),
                     )
                 )
             )
