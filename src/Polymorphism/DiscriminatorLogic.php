@@ -58,7 +58,7 @@ trait DiscriminatorLogic
     /** @inheritDoc */
     public static function fromRecordData(array $recordData): self
     {
-        $propertyValue = self::propertyValue($recordData);
+        $propertyValue        = self::propertyValue($recordData);
         $immutableRecordClass = self::immutableRecordClass($propertyValue);
 
         return self::parentFromRecordData(['value' => $immutableRecordClass::fromRecordData($recordData)]);
@@ -67,7 +67,7 @@ trait DiscriminatorLogic
     /** @inheritDoc */
     public static function fromArray(array $nativeData): self
     {
-        $propertyValue = self::propertyValue($nativeData);
+        $propertyValue        = self::propertyValue($nativeData);
         $immutableRecordClass = self::immutableRecordClass($propertyValue);
 
         return self::parentFromRecordData(['value' => $immutableRecordClass::fromArray($nativeData)]);
@@ -149,11 +149,7 @@ trait DiscriminatorLogic
         return $mapping[$propertyValue];
     }
 
-    /**
-     * @return static
-     *
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     public function with(array $recordData): static
     {
         if (isset($recordData[static::propertyName()])) {

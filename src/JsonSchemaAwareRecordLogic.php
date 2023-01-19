@@ -68,7 +68,7 @@ trait JsonSchemaAwareRecordLogic
         }
 
         if (self::$__schema === null) {
-            $properties = [];
+            $properties        = [];
             $defaultProperties = self::defaultProperties();
 
             foreach (self::$__propTypeMap as $propertyName => [$type, $isScalar, $isNullable]) {
@@ -105,9 +105,9 @@ trait JsonSchemaAwareRecordLogic
                 $properties[$propertyName] = $property;
             }
 
-            $optionalProperties = array_flip(self::__optionalProperties());
+            $optionalProperties        = array_flip(self::__optionalProperties());
             $propertiesWithoutOptional = array_diff_key($properties, $optionalProperties);
-            $optionalProperties = array_intersect_key($properties, $optionalProperties);
+            $optionalProperties        = array_intersect_key($properties, $optionalProperties);
 
             self::$__schema = JsonSchema::object($propertiesWithoutOptional, $optionalProperties);
         }
@@ -181,7 +181,7 @@ trait JsonSchemaAwareRecordLogic
             return null;
         }
 
-        $summary = $docBlock->getSummary();
+        $summary     = $docBlock->getSummary();
         $description = $docBlock->getDescription()->render();
 
         if (empty($summary) && empty($description)) {
@@ -214,7 +214,7 @@ trait JsonSchemaAwareRecordLogic
             return [$example];
         }
 
-        $docBlock = self::docBlockForProperty($propertyName);
+        $docBlock         = self::docBlockForProperty($propertyName);
         $docBlockExamples = $docBlock ? $docBlock->getTagsByName('example') : null;
 
         if (! empty($docBlockExamples)) {
@@ -259,7 +259,7 @@ trait JsonSchemaAwareRecordLogic
     /** @return array<string, mixed> */
     public static function defaultProperties(): array
     {
-        $propertyNames = array_keys(self::buildPropTypeMap());
+        $propertyNames     = array_keys(self::buildPropTypeMap());
         $defaultProperties = self::__defaultProperties();
 
         if (! empty($defaultProperties) && ! ArrayUtil::isAssociative($defaultProperties)) {
@@ -304,11 +304,11 @@ trait JsonSchemaAwareRecordLogic
     {
         if ($useMaxValuesAsDefaults && is_callable([static::class, 'maxValues'])) {
             static::$__useMaxValues = true;
-            $nativeData = array_merge(static::maxValues(), $nativeData);
+            $nativeData             = array_merge(static::maxValues(), $nativeData);
         }
 
         $camelCasedNativeData = ArrayUtil::toCamelCasedKeys($nativeData);
-        $propTypeMap = self::buildPropTypeMap();
+        $propTypeMap          = self::buildPropTypeMap();
 
         $filteredAllowedProperties = array_intersect_key(
             $camelCasedNativeData,
