@@ -10,13 +10,9 @@ interface Discriminator extends JsonSchemaAwareRecord
 {
     public static function propertyName(): string;
 
-    /**
-     * @return array<string, class-string<JsonSchemaAwareRecord>>
-     */
+    /** @return array<string, class-string<JsonSchemaAwareRecord>> */
     public static function mapping(): array;
 
-    /**
-     * @return array<class-string<JsonSchemaAwareRecord>>
-     */
+    /** @return array<class-string<JsonSchemaAwareRecord>> */
     public static function jsonSchemaAwareRecords(): array;
 }

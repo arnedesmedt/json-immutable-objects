@@ -44,9 +44,7 @@ trait DiscriminatorLogic
         return $this->value;
     }
 
-    /**
-     * @return array<string, class-string<JsonSchemaAwareRecord>>|null
-     */
+    /** @return array<string, class-string<JsonSchemaAwareRecord>>|null */
     public static function mapping(): array
     {
         $keys = array_map(
@@ -57,9 +55,7 @@ trait DiscriminatorLogic
         return array_combine($keys, static::jsonSchemaAwareRecords());
     }
 
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     public static function fromRecordData(array $recordData): self
     {
         $propertyValue = self::propertyValue($recordData);
@@ -68,9 +64,7 @@ trait DiscriminatorLogic
         return self::parentFromRecordData(['value' => $immutableRecordClass::fromRecordData($recordData)]);
     }
 
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     public static function fromArray(array $nativeData): self
     {
         $propertyValue = self::propertyValue($nativeData);
@@ -79,9 +73,7 @@ trait DiscriminatorLogic
         return self::parentFromRecordData(['value' => $immutableRecordClass::fromArray($nativeData)]);
     }
 
-    /**
-     * @param array<string, mixed> $data
-     */
+    /** @param array<string, mixed> $data */
     private static function propertyValue(array $data): string
     {
         if (! isset($data[static::propertyName()])) {
@@ -89,8 +81,8 @@ trait DiscriminatorLogic
                 sprintf(
                     'No discriminator property \'%s\' found to generate \'%s\'.',
                     static::propertyName(),
-                    static::class
-                )
+                    static::class,
+                ),
             );
         }
 
@@ -108,14 +100,12 @@ trait DiscriminatorLogic
             sprintf(
                 'Property \'%s\' needs to be a string as a discriminator for \'%s\'.',
                 static::propertyName(),
-                static::class
-            )
+                static::class,
+            ),
         );
     }
 
-    /**
-     * @return class-string<JsonSchemaAwareRecord>
-     */
+    /** @return class-string<JsonSchemaAwareRecord> */
     private static function immutableRecordClass(mixed $propertyValue): string
     {
         $mapping = static::mapping();
@@ -125,8 +115,8 @@ trait DiscriminatorLogic
                 sprintf(
                     'Discriminator value \'%s\' is not valid for \'%s\'.',
                     $propertyValue,
-                    static::class
-                )
+                    static::class,
+                ),
             );
         }
 
@@ -137,8 +127,8 @@ trait DiscriminatorLogic
                 sprintf(
                     'Class \'%s\' doesn\'t exists as oneOf model for discriminator \'%s\'.',
                     $class,
-                    static::class
-                )
+                    static::class,
+                ),
             );
         }
 
@@ -151,8 +141,8 @@ trait DiscriminatorLogic
                     'to be a oneOf model for discriminator \'%s\'.',
                     $class,
                     JsonSchemaAwareRecord::class,
-                    static::class
-                )
+                    static::class,
+                ),
             );
         }
 
@@ -170,17 +160,15 @@ trait DiscriminatorLogic
             throw new LogicException(
                 sprintf(
                     'Can\'t set the discriminator property as a key in the with function for \'%s\'.',
-                    static::class
-                )
+                    static::class,
+                ),
             );
         }
 
         return $this->withParent(['value' => $this->value->with($recordData)]);
     }
 
-    /**
-     * @inheritDoc
-     */
+    /** @inheritDoc */
     public function toArray(): array
     {
         return $this->value->toArray();
@@ -209,16 +197,16 @@ trait DiscriminatorLogic
                                     static::propertyName() => new StringType(
                                         [
                                             StringType::ENUM => [$discriminatorValue],
-                                        ]
+                                        ],
                                     ),
-                                ]
+                                ],
                             );
                         },
                         array_keys(static::mapping()),
                         static::mapping(),
-                    )
-                )
-            )
+                    ),
+                ),
+            ),
         );
     }
 }

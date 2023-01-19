@@ -52,9 +52,7 @@ trait JsonSchemaAwareRecordLogic
     // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
     private static bool $__useMaxValues = false;
 
-    /**
-     * @param array<mixed> $arrayPropTypeMap
-     */
+    /** @param array<mixed> $arrayPropTypeMap */
     private static function generateSchemaFromPropTypeMap(array $arrayPropTypeMap = []): Type
     {
         if (self::$__propTypeMap === null) {
@@ -78,7 +76,7 @@ trait JsonSchemaAwareRecordLogic
                     $propertyName,
                     $type,
                     $isScalar,
-                    $isNullable
+                    $isNullable,
                 );
 
                 if (! $property instanceof AnnotatedType) {
@@ -99,9 +97,9 @@ trait JsonSchemaAwareRecordLogic
 
                 try {
                     $property = $property->withDefault(
-                        self::propertyDefault($propertyName, $defaultProperties)
+                        self::propertyDefault($propertyName, $defaultProperties),
                     );
-                } catch (Throwable $e) {
+                } catch (Throwable) {
                 }
 
                 $properties[$propertyName] = $property;
@@ -131,8 +129,8 @@ trait JsonSchemaAwareRecordLogic
                     sprintf(
                         'Missing array item type in array property map. ' .
                         'Please provide an array item type for property %s.',
-                        $propertyName
-                    )
+                        $propertyName,
+                    ),
                 );
             }
 
@@ -145,8 +143,8 @@ trait JsonSchemaAwareRecordLogic
                     sprintf(
                         "Array item type of property %s must not be 'array', " .
                         'only a scalar type or an existing class can be used as array item type.',
-                        $propertyName
-                    )
+                        $propertyName,
+                    ),
                 );
             } else {
                 $arrayItemSchema = self::getTypeFromClass($arrayItemType);
@@ -164,7 +162,7 @@ trait JsonSchemaAwareRecordLogic
         return JsonSchema::nullOr($schema);
     }
 
-    private static function docBlockForProperty(string $propertyName): ?DocBlock
+    private static function docBlockForProperty(string $propertyName): DocBlock|null
     {
         $reflectionProperty = (new ReflectionClass(static::class))->getProperty($propertyName);
 
@@ -175,7 +173,7 @@ trait JsonSchemaAwareRecordLogic
         return DocBlockFactory::createInstance()->create($reflectionProperty);
     }
 
-    private static function propertyDescription(string $propertyName): ?string
+    private static function propertyDescription(string $propertyName): string|null
     {
         $docBlock = self::docBlockForProperty($propertyName);
 
@@ -196,15 +194,13 @@ trait JsonSchemaAwareRecordLogic
                 [
                     $docBlock->getSummary(),
                     $docBlock->getDescription()->render(),
-                ]
-            )
+                ],
+            ),
         );
     }
 
-    /**
-     * @return array<mixed>|null
-     */
-    private static function propertyExamples(string $propertyName): ?array
+    /** @return array<mixed>|null */
+    private static function propertyExamples(string $propertyName): array|null
     {
         $examplesPerProperty = self::allExamples();
 
@@ -224,16 +220,14 @@ trait JsonSchemaAwareRecordLogic
         if (! empty($docBlockExamples)) {
             return array_map(
                 static fn (Generic $generic) => StringUtil::castFromString($generic->getDescription()->render()),
-                $docBlockExamples
+                $docBlockExamples,
             );
         }
 
         return null;
     }
 
-    /**
-     * @param array<string, mixed> $defaultProperties
-     */
+    /** @param array<string, mixed> $defaultProperties */
     public static function propertyDefault(string $propertyName, array $defaultProperties): mixed
     {
         if (! isset($defaultProperties[$propertyName])) {
@@ -252,9 +246,7 @@ trait JsonSchemaAwareRecordLogic
         return TypeDetector::getTypeFromClass($classOrType, self::__allowNestedSchema());
     }
 
-    /**
-     * @return array<mixed>
-     */
+    /** @return array<mixed> */
     private static function allExamples(): array
     {
         if ((new ReflectionClass(static::class))->implementsInterface(HasPropertyExamples::class)) {
@@ -264,9 +256,7 @@ trait JsonSchemaAwareRecordLogic
         return [];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     public static function defaultProperties(): array
     {
         $propertyNames = array_keys(self::buildPropTypeMap());
@@ -277,24 +267,22 @@ trait JsonSchemaAwareRecordLogic
                 sprintf(
                     'The __defaultProperties method from \'%s\', should be an associative array ' .
                     'where the key is the property and the value is the default value.',
-                    static::class
-                )
+                    static::class,
+                ),
             );
         }
 
         return array_filter(
             array_merge(
                 (new ReflectionClass(static::class))->getDefaultProperties(),
-                $defaultProperties
+                $defaultProperties,
             ),
             static fn ($key) => in_array($key, $propertyNames),
-            ARRAY_FILTER_USE_KEY
+            ARRAY_FILTER_USE_KEY,
         );
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     private static function __defaultProperties(): array
     {
         return [];
@@ -324,7 +312,7 @@ trait JsonSchemaAwareRecordLogic
 
         $filteredAllowedProperties = array_intersect_key(
             $camelCasedNativeData,
-            $propTypeMap
+            $propTypeMap,
         );
 
         foreach ($filteredAllowedProperties as $key => $allowedProperty) {
@@ -336,9 +324,7 @@ trait JsonSchemaAwareRecordLogic
         return self::parentFromArray($filteredAllowedProperties);
     }
 
-    /**
-     * @return array<mixed>
-     */
+    /** @return array<mixed> */
     private static function buildPropTypeMap(): array
     {
         $propTypeMap = self::parentBuildPropTypeMap();
@@ -357,9 +343,7 @@ trait JsonSchemaAwareRecordLogic
         return array_keys(self::defaultProperties());
     }
 
-    /**
-     * @return array<string, string>
-     */
+    /** @return array<string, string> */
     public static function __itemTypeMapping(): array
     {
         return static::arrayPropItemTypeMap();
@@ -385,7 +369,7 @@ trait JsonSchemaAwareRecordLogic
 
             try {
                 $reflectionType = new ReflectionClass($type);
-            } catch (ReflectionException $e) {
+            } catch (ReflectionException) {
                 continue;
             }
 
