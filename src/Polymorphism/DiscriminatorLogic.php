@@ -22,6 +22,7 @@ use function array_values;
 use function class_exists;
 use function class_implements;
 use function in_array;
+use function is_object;
 use function is_string;
 use function method_exists;
 use function sprintf;
@@ -44,7 +45,7 @@ trait DiscriminatorLogic
         return $this->value;
     }
 
-    /** @return array<string, class-string<JsonSchemaAwareRecord>>|null */
+    /** @inheritDoc */
     public static function mapping(): array
     {
         $keys = array_map(
@@ -52,7 +53,10 @@ trait DiscriminatorLogic
             static::jsonSchemaAwareRecords(),
         );
 
-        return array_combine($keys, static::jsonSchemaAwareRecords());
+        /** @var array<string, class-string<JsonSchemaAwareRecord>> $mapping */
+        $mapping = array_combine($keys, static::jsonSchemaAwareRecords());
+
+        return $mapping;
     }
 
     /** @inheritDoc */
@@ -92,7 +96,7 @@ trait DiscriminatorLogic
             return $propertyValue;
         }
 
-        if (method_exists($propertyValue, 'toString')) {
+        if (is_object($propertyValue) && method_exists($propertyValue, 'toString')) {
             return $propertyValue->toString();
         }
 
@@ -106,8 +110,9 @@ trait DiscriminatorLogic
     }
 
     /** @return class-string<JsonSchemaAwareRecord> */
-    private static function immutableRecordClass(mixed $propertyValue): string
+    private static function immutableRecordClass(string $propertyValue): string
     {
+        /** @var array<string, class-string<JsonSchemaAwareRecord>> $mapping */
         $mapping = static::mapping();
 
         if (! isset($mapping[$propertyValue])) {
@@ -150,7 +155,7 @@ trait DiscriminatorLogic
     }
 
     /** @inheritDoc */
-    public function with(array $recordData): static
+    public function with(array $recordData): self
     {
         if (isset($recordData[static::propertyName()])) {
             throw new LogicException(
@@ -170,9 +175,9 @@ trait DiscriminatorLogic
         return $this->value->toArray();
     }
 
-    public function equals(ImmutableRecord $other): bool
+    public function equals(ImmutableRecord|Discriminator $other): bool
     {
-        return $this->value->equals($other);
+        return $this->value->equals($other instanceof Discriminator ? $other->value() : $other);
     }
 
     public static function __schema(): TypeSchema

@@ -1,0 +1,70 @@
+name: CI Check
+on:
+    pull_request:
+        paths:
+            - "**.php"
+            - "phpcs.xml"
+            - ".github/workflows/main.yml"
+
+jobs:
+    phpcs:
+        runs-on: ubuntu-latest
+        steps:
+            -   uses: actions/checkout@v3
+            -   name: Setup PHP Action
+                uses: shivammathur/setup-php@2.23.0
+                with:
+                    php-version: '8.1'
+                    extensions: intl, json
+                    tools: composer
+            -   uses: ramsey/composer-install@v2
+            -   uses: tinovyatkin/action-php-codesniffer@v1
+                with:
+                    files: "**.php" # you may customize glob as needed
+                    phpcs_path: php phpcs.phar
+                    standard: phpcs.xml
+    phpstan:
+        runs-on: ubuntu-latest
+        steps:
+            -   uses: actions/checkout@v3
+            -   name: Setup PHP Action
+                uses: shivammathur/setup-php@2.23.0
+                with:
+                    php-version: '8.1'
+                    extensions: intl, json
+                    tools: composer
+            -   uses: ramsey/composer-install@v2
+            -   uses: php-actions/phpstan@v3
+    phpunit:
+        runs-on: ubuntu-latest
+        steps:
+            -   uses: actions/checkout@v3
+            -   name: Setup PHP Action
+                uses: shivammathur/setup-php@2.23.0
+                with:
+                    php-version: '8.1'
+                    extensions: intl, json
+                    tools: composer
+            -   uses: ramsey/composer-install@v2
+            -   uses: php-actions/phpunit@v3
+                with:
+                    bootstrap: tests/bootstrap.php
+                    configuration: phpunit.xml.dist
+                    php_extensions: xdebug
+                    args: --coverage-clover ./coverage.xml
+                env:
+                    XDEBUG_MODE: coverage
+    rector:
+        runs-on: ubuntu-latest
+        steps:
+            -   uses: actions/checkout@v3
+            -   name: Setup PHP Action
+                uses: shivammathur/setup-php@2.23.0
+                with:
+                    php-version: '8.1'
+                    extensions: intl, json
+                    tools: composer
+            -   uses: ramsey/composer-install@v2
+            -   uses: zingimmick/rector-action@0.0.2
+                with:
+                    args: --dry-run
