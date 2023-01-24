@@ -3,6 +3,9 @@ parameters:
     paths:
         - src
         - tests
+    excludePaths:
+        analyse:
+            - tests/Object/TestObjectWithInvalidDefaultProperties.php
 services:
     -
         class: ADS\JsonImmutableObjects\PhpStan\PropertiesExtension

@@ -14,6 +14,7 @@ use EventEngine\Data\SpecialKeySupport;
 use EventEngine\JsonSchema\AnnotatedType;
 use EventEngine\JsonSchema\JsonSchema;
 use EventEngine\JsonSchema\Type;
+use EventEngine\JsonSchema\Type\ObjectType;
 use InvalidArgumentException;
 use ReflectionClass;
 use ReflectionException;
@@ -159,8 +160,11 @@ trait JsonSchemaAwareRecordLogic
     /** @return array<mixed> */
     private static function allExamples(): array
     {
-        if ((new ReflectionClass(static::class))->implementsInterface(HasPropertyExamples::class)) {
-            return self::examples();
+        if (
+            (new ReflectionClass(static::class))->implementsInterface(HasPropertyExamples::class)
+            && method_exists(static::class, 'examples')
+        ) {
+            return static::examples();
         }
 
         return [];
@@ -395,7 +399,7 @@ trait JsonSchemaAwareRecordLogic
         self::$__useMaxValues = false;
     }
 
-    /** @param class-string<JsonSchemaAwareRecordLogic> $type */
+    /** @param class-string<ImmutableRecord> $type */
     public function initProperty(string $key, string $type, bool $isNullable): void
     {
         try {
@@ -410,4 +414,10 @@ trait JsonSchemaAwareRecordLogic
             }
         }
     }
+
+    /**
+     * @var ObjectType
+     * phpcs:disable
+     */
+    private static $__schema;
 }
