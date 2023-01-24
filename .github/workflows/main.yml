@@ -23,21 +23,16 @@ jobs:
                   key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
                   restore-keys: ${{ runner.os }}-composer-
             - uses: ramsey/composer-install@v2
-              continue-on-error: true
             - name: Run PhpCs
-              continue-on-error: true
               run: vendor/bin/phpcs
             - name: Run PhpStan
               run: vendor/bin/phpstan analyze --no-progress --no-interaction --error-format=github
               continue-on-error: true
             - name: Run PhpMd
-              continue-on-error: true
               run: vendor/bin/phpmd src text phpmd.xml
             - name: Run rector
-              continue-on-error: true
               run: vendor/bin/rector --dry-run --no-progress-bar
             - uses: php-actions/phpunit@v3
-              continue-on-error: true
               with:
                   bootstrap: tests/bootstrap.php
                   configuration: phpunit.xml.dist
