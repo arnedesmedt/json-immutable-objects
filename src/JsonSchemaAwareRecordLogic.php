@@ -34,8 +34,9 @@ use function count;
 use function in_array;
 use function is_array;
 use function is_string;
-use function preg_match;
+use function method_exists;
 use function sprintf;
+use function str_starts_with;
 
 use const ARRAY_FILTER_USE_KEY;
 
@@ -233,44 +234,47 @@ trait JsonSchemaAwareRecordLogic
             return JsonSchema::schemaFromScalarPhpType($type, $isNullable);
         }
 
-        if ($type === ImmutableRecord::PHP_TYPE_ARRAY) {
-            $arrayPropItemTypeMap = self::getArrayPropItemTypeMapFromMethodOrCache();
-            if (! array_key_exists($propertyName, $arrayPropItemTypeMap)) {
-                throw new InvalidArgumentException(
-                    sprintf(
-                        'Missing array item type in array property map. ' .
-                        'Please provide an array item type for property %s.',
-                        $propertyName,
-                    ),
-                );
-            }
-
-            $arrayItemType = $arrayPropItemTypeMap[$propertyName];
-
-            if (self::isScalarType($arrayItemType)) {
-                $arrayItemSchema = JsonSchema::schemaFromScalarPhpType($arrayItemType, false);
-            } elseif ($arrayItemType === ImmutableRecord::PHP_TYPE_ARRAY) {
-                throw new InvalidArgumentException(
-                    sprintf(
-                        "Array item type of property %s must not be 'array', " .
-                        'only a scalar type or an existing class can be used as array item type.',
-                        $propertyName,
-                    ),
-                );
-            } else {
-                $arrayItemSchema = self::getTypeFromClass($arrayItemType);
-            }
-
-            $schema = JsonSchema::array($arrayItemSchema);
-        } else {
-            $schema = self::getTypeFromClass($type);
-        }
+        $schema = $type === ImmutableRecord::PHP_TYPE_ARRAY
+            ? self::schemaFromArrayProperty($propertyName)
+            : self::getTypeFromClass($type);
 
         if (! $isNullable) {
             return $schema;
         }
 
         return JsonSchema::nullOr($schema);
+    }
+
+    private static function schemaFromArrayProperty(string $propertyName): Type
+    {
+        $arrayPropItemTypeMap = self::getArrayPropItemTypeMapFromMethodOrCache();
+        if (! array_key_exists($propertyName, $arrayPropItemTypeMap)) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Missing array item type in array property map. ' .
+                    'Please provide an array item type for property %s.',
+                    $propertyName,
+                ),
+            );
+        }
+
+        $arrayItemType = $arrayPropItemTypeMap[$propertyName];
+
+        if (self::isScalarType($arrayItemType)) {
+            return JsonSchema::array(JsonSchema::schemaFromScalarPhpType($arrayItemType, false));
+        }
+
+        if ($arrayItemType === ImmutableRecord::PHP_TYPE_ARRAY) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    "Array item type of property %s must not be 'array', " .
+                    'only a scalar type or an existing class can be used as array item type.',
+                    $propertyName,
+                ),
+            );
+        }
+
+        return JsonSchema::array(self::getTypeFromClass($arrayItemType));
     }
 
     /**
@@ -388,19 +392,25 @@ trait JsonSchemaAwareRecordLogic
                 continue;
             }
 
-            try {
-                $this->{$key} = self::$__useMaxValues
-                    ? $type::fromArrayWithDefaultMaxValues([])
-                    : $type::fromArray([]);
-            } catch (InvalidArgumentException $exception) {
-                if ($isNullable) {
-                    $this->{$key} = null;
-                } elseif (! preg_match('/^Missing record data for key/', $exception->getMessage())) {
-                    throw $exception;
-                }
-            }
+            $this->initProperty($key, $type, $isNullable);
         }
 
         self::$__useMaxValues = false;
+    }
+
+    /** @param class-string<JsonSchemaAwareRecordLogic> $type */
+    public function initProperty(string $key, string $type, bool $isNullable): void
+    {
+        try {
+            $this->{$key} = self::$__useMaxValues && method_exists($type, 'fromArrayWithDefaultMaxValues')
+                ? $type::fromArrayWithDefaultMaxValues([])
+                : $type::fromArray([]);
+        } catch (InvalidArgumentException $exception) {
+            if ($isNullable) {
+                $this->{$key} = null;
+            } elseif (! str_starts_with($exception->getMessage(), 'Missing record data for key')) {
+                throw $exception;
+            }
+        }
     }
 }
