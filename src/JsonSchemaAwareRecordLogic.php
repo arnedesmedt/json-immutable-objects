@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace ADS\JsonImmutableObjects;
 
+use ADS\Util\ArrayUtil;
 use ADS\ValueObjects\Implementation\TypeDetector;
 use ADS\ValueObjects\ValueObject;
 use EventEngine\Data\ImmutableRecord;
@@ -132,6 +133,9 @@ trait JsonSchemaAwareRecordLogic
      */
     private function convertKeys(array $data): array
     {
+        /** @var array<string, mixed> $data */
+        $data = ArrayUtil::toCamelCasedKeys($data); // todo remove and use SpecialKeySupport
+
         if (! $this instanceof SpecialKeySupport) {
             return $data;
         }

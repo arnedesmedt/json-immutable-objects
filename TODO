@@ -1,5 +1,3 @@
-// todo add conversion to camelCased properties
 // todo add docs
-
 // todo remove non existing properties if an annotation is set on the class.
 // todo remove conversion to camelCased properties, and use the special key support instead, via traits
