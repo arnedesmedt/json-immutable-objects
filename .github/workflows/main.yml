@@ -7,64 +7,40 @@ on:
             - ".github/workflows/main.yml"
 
 jobs:
-    phpcs:
+    symfony:
         runs-on: ubuntu-latest
+        strategy:
+            fail-fast: true
         steps:
-            -   uses: actions/checkout@v3
-            -   name: Setup PHP Action
-                uses: shivammathur/setup-php@2.23.0
-                with:
-                    php-version: '8.1'
-                    extensions: intl, json
-                    tools: composer
-            -   uses: ramsey/composer-install@v2
-            -   uses: tinovyatkin/action-php-codesniffer@v1
-                with:
-                    files: "**.php" # you may customize glob as needed
-                    phpcs_path: php phpcs.phar
-                    standard: phpcs.xml
-    phpstan:
-        runs-on: ubuntu-latest
-        steps:
-            -   uses: actions/checkout@v3
-            -   name: Setup PHP Action
-                uses: shivammathur/setup-php@2.23.0
-                with:
-                    php-version: '8.1'
-                    extensions: intl, json
-                    tools: composer
-            -   uses: ramsey/composer-install@v2
-            -   uses: php-actions/phpstan@v3
-    phpunit:
-        runs-on: ubuntu-latest
-        steps:
-            -   uses: actions/checkout@v3
-            -   name: Setup PHP Action
-                uses: shivammathur/setup-php@2.23.0
-                with:
-                    php-version: '8.1'
-                    extensions: intl, json
-                    tools: composer
-            -   uses: ramsey/composer-install@v2
-            -   uses: php-actions/phpunit@v3
-                with:
-                    bootstrap: tests/bootstrap.php
-                    configuration: phpunit.xml.dist
-                    php_extensions: xdebug
-                    args: --coverage-clover ./coverage.xml
-                env:
-                    XDEBUG_MODE: coverage
-    rector:
-        runs-on: ubuntu-latest
-        steps:
-            -   uses: actions/checkout@v3
-            -   name: Setup PHP Action
-                uses: shivammathur/setup-php@2.23.0
-                with:
-                    php-version: '8.1'
-                    extensions: intl, json
-                    tools: composer
-            -   uses: ramsey/composer-install@v2
-            -   uses: zingimmick/rector-action@0.0.2
-                with:
-                    args: --dry-run
+            - name: Checkout
+              uses: actions/checkout@v2
+            - name: Setup PHP
+              uses: shivammathur/setup-php@2.23.0
+              with:
+                  php-version: 8.1
+                  tools: composer
+            - name: Get composer cache directory
+              id: composer-cache
+              run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+            - name: Cache composer dependencies
+              uses: actions/cache@v1
+              with:
+                  path: ${{ steps.composer-cache.outputs.dir }}
+                  key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+                  restore-keys: ${{ runner.os }}-composer-
+            - uses: ramsey/composer-install@v2
+            - uses: tinovyatkin/action-php-codesniffer@v1
+            - uses: php-actions/phpstan@v3
+            - name: Run PhpMd
+              run: vendor/bin/phpmd src text phpmd.xml
+            - uses: zingimmick/rector-action@0.0.2
+              with:
+                  args: --dry-run
+            - uses: php-actions/phpunit@v3
+              with:
+                  bootstrap: tests/bootstrap.php
+                  configuration: phpunit.xml.dist
+                  php_extensions: xdebug
+                  args: --coverage-clover ./coverage.xml
+              env:
+                  XDEBUG_MODE: coverage
