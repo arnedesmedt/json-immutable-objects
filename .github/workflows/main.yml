@@ -27,7 +27,6 @@ jobs:
               run: vendor/bin/phpcs
             - name: Run PhpStan
               run: vendor/bin/phpstan analyze --no-progress --no-interaction --error-format=github
-              continue-on-error: true
             - name: Run PhpMd
               run: vendor/bin/phpmd src text phpmd.xml
             - name: Run rector
