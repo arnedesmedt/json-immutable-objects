@@ -150,10 +150,7 @@ trait JsonSchemaAwareRecordLogic
         $defaultProperties = self::__defaultProperties();
 
         return array_filter(
-            array_merge(
-                (new ReflectionClass(static::class))->getDefaultProperties(),
-                $defaultProperties,
-            ),
+            [...(new ReflectionClass(static::class))->getDefaultProperties(), ...$defaultProperties],
             static fn ($key) => in_array($key, $propertyNames),
             ARRAY_FILTER_USE_KEY,
         );
