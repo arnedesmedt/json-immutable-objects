@@ -1,9 +1,4 @@
 // todo add conversion to camelCased properties
-// todo improve github actions => one job with all the tests
-// @see https://ghygen.hi-folks.dev/?template=phppackage&code=0a39285ae6c3b46df33fc8e5af05b553
-// or https://dev.to/romaixn/github-actions-for-symfony-5-phpunit-and-more-4e90
-// todo add phpmd
-
 // todo add docs
 
 // todo remove non existing properties if an annotation is set on the class.
