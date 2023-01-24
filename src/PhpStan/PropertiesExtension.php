@@ -13,11 +13,13 @@ use function method_exists;
 
 class PropertiesExtension implements ReadWritePropertiesExtension
 {
+    /** @SuppressWarnings(PHPMD.UnusedFormalParameter) */
     public function isAlwaysRead(PropertyReflection $property, string $propertyName): bool
     {
         return $property->getDeclaringClass()->implementsInterface(ImmutableRecord::class);
     }
 
+    /** @SuppressWarnings(PHPMD.UnusedFormalParameter) */
     public function isAlwaysWritten(PropertyReflection $property, string $propertyName): bool
     {
         return $property->getDeclaringClass()->implementsInterface(ImmutableRecord::class);

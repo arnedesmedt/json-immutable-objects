@@ -8,17 +8,11 @@ use EventEngine\JsonSchema\JsonSchemaAwareRecord;
 
 trait FactoryFromArray
 {
-    /**
-     * @return class-string<JsonSchemaAwareRecord>
-     */
+    /** @return class-string<JsonSchemaAwareRecord> */
     abstract protected static function modelClass(): string;
 
-    /**
-     * @param array<string, mixed> $array
-     *
-     * @return mixed
-     */
-    public static function fromArray(array $array)
+    /** @param array<string, mixed> $array */
+    public static function fromArray(array $array): mixed
     {
         return self::modelClass()::fromArray($array);
     }

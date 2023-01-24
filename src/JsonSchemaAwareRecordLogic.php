@@ -8,7 +8,6 @@ declare(strict_types=1);
 namespace ADS\JsonImmutableObjects;
 
 use ADS\Util\ArrayUtil;
-use ADS\Util\StringUtil;
 use ADS\ValueObjects\Implementation\TypeDetector;
 use ADS\ValueObjects\ValueObject;
 use EventEngine\Data\ImmutableRecord;
@@ -16,12 +15,11 @@ use EventEngine\Data\SpecialKeySupport;
 use EventEngine\JsonSchema\AnnotatedType;
 use EventEngine\JsonSchema\JsonSchema;
 use EventEngine\JsonSchema\Type;
+use EventEngine\JsonSchema\Type\ObjectType;
 use InvalidArgumentException;
-use phpDocumentor\Reflection\DocBlock;
-use phpDocumentor\Reflection\DocBlock\Tags\Generic;
-use phpDocumentor\Reflection\DocBlockFactory;
 use ReflectionClass;
 use ReflectionException;
+use ReflectionProperty;
 use RuntimeException;
 use Throwable;
 
@@ -33,12 +31,14 @@ use function array_key_exists;
 use function array_keys;
 use function array_map;
 use function array_merge;
+use function assert;
 use function count;
-use function implode;
 use function in_array;
-use function is_callable;
-use function preg_match;
+use function is_array;
+use function is_string;
+use function method_exists;
 use function sprintf;
+use function str_starts_with;
 
 use const ARRAY_FILTER_USE_KEY;
 
@@ -46,6 +46,8 @@ trait JsonSchemaAwareRecordLogic
 {
     use \EventEngine\JsonSchema\JsonSchemaAwareRecordLogic {
         fromArray as parentFromArray;
+        setNativeData as parentSetNativeData;
+        setRecordData as parentSetRecordData;
         buildPropTypeMap as parentBuildPropTypeMap;
     }
 
@@ -53,9 +55,127 @@ trait JsonSchemaAwareRecordLogic
     private static bool $__useMaxValues = false;
 
     /**
-     * @param array<mixed> $arrayPropTypeMap
+     * @param array<mixed> $nativeData
+     *
+     * @return self
+     *
+     * @phpcsSuppress SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingNativeTypeHint
      */
-    private static function generateSchemaFromPropTypeMap(array $arrayPropTypeMap = []): Type
+    public static function fromArray(array $nativeData)
+    {
+        // Convert value objects to native data.
+        return self::parentFromArray(
+            array_map(
+                static fn ($value) => $value instanceof ValueObject ? $value->toValue() : $value,
+                $nativeData,
+            ),
+        );
+    }
+
+    /** @param array<string, mixed> $nativeData */
+    private function setNativeData(array $nativeData): void
+    {
+        assert(is_array(self::$__propTypeMap));
+
+        // Filter not allowed properties.
+        $filteredNativeData = array_intersect_key(
+            $this->convertKeys($nativeData),
+            self::$__propTypeMap,
+        );
+
+        $this->parentSetNativeData($filteredNativeData);
+        $this->addDefaultProperties();
+    }
+
+    /** @param array<string, mixed> $recordData */
+    private function setRecordData(array $recordData): void
+    {
+        assert(is_array(self::$__propTypeMap));
+
+        // Filter not allowed properties.
+        $filteredRecordData = array_intersect_key(
+            $this->convertKeys($recordData),
+            self::$__propTypeMap,
+        );
+
+        $this->parentSetRecordData($filteredRecordData);
+        $this->addDefaultProperties();
+    }
+
+    private function addDefaultProperties(): void
+    {
+        $defaultProperties = self::__defaultProperties();
+
+        foreach ($defaultProperties as $property => $defaultValue) {
+            if (! is_string($property)) {
+                throw new RuntimeException(
+                    sprintf(
+                        'The __defaultProperties method from \'%s\', should be an associative array' .
+                        'where the key is the property and the value is the default value. Found key \'%d\'.',
+                        static::class,
+                        $property,
+                    ),
+                );
+            }
+
+            if (isset($this->{$property})) {
+                continue;
+            }
+
+            $this->{$property} = $defaultValue;
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return array<string, mixed>
+     */
+    private function convertKeys(array $data): array
+    {
+        /** @var array<string, mixed> $data */
+        $data = ArrayUtil::toCamelCasedKeys($data); // todo remove and use SpecialKeySupport
+
+        if (! $this instanceof SpecialKeySupport) {
+            return $data;
+        }
+
+        $dataWithConvertedKeys = [];
+        foreach ($data as $key => $value) {
+            $dataWithConvertedKeys[$this->convertKeyForRecord($key)] = $value;
+        }
+
+        return $dataWithConvertedKeys;
+    }
+
+    /** @return array<string, mixed> */
+    public static function defaultProperties(): array
+    {
+        $propertyNames     = array_keys(self::buildPropTypeMap());
+        $defaultProperties = self::__defaultProperties();
+
+        return array_filter(
+            [...(new ReflectionClass(static::class))->getDefaultProperties(), ...$defaultProperties],
+            static fn ($key) => in_array($key, $propertyNames),
+            ARRAY_FILTER_USE_KEY,
+        );
+    }
+
+    /** @return array<mixed> */
+    private static function allExamples(): array
+    {
+        if (
+            (new ReflectionClass(static::class))->implementsInterface(HasPropertyExamples::class)
+            && method_exists(static::class, 'examples')
+        ) {
+            return static::examples();
+        }
+
+        return [];
+    }
+
+    /** @param array<mixed> $arrayPropTypeMap */
+    private static function generateSchemaFromPropTypeMap(array $arrayPropTypeMap = []): Type\ObjectType
     {
         if (self::$__propTypeMap === null) {
             self::$__propTypeMap = self::buildPropTypeMap();
@@ -70,38 +190,34 @@ trait JsonSchemaAwareRecordLogic
         }
 
         if (self::$__schema === null) {
-            $properties = [];
+            $properties        = [];
             $defaultProperties = self::defaultProperties();
+            $examplesPerProperty = self::allExamples();
 
             foreach (self::$__propTypeMap as $propertyName => [$type, $isScalar, $isNullable]) {
                 $properties[$propertyName] = $property = self::baseProperty(
                     $propertyName,
                     $type,
                     $isScalar,
-                    $isNullable
+                    $isNullable,
                 );
 
                 if (! $property instanceof AnnotatedType) {
                     continue;
                 }
 
-                $description = self::propertyDescription($propertyName);
+                $reflectionProperty = (new ReflectionClass(static::class))->getProperty($propertyName);
+                $description = DocBlockFactory::summaryAndDescription($reflectionProperty);
+                $property = $description
+                    ? $property->describedAs($description)
+                    : $property;
 
-                if ($description) {
-                    $property = $property->describedAs($description);
-                }
-
-                $examples = self::propertyExamples($propertyName);
-
-                if ($examples !== null) {
-                    $property = $property->withExamples(...$examples);
-                }
+                $examples = self::propertyExamples($examplesPerProperty, $propertyName, $reflectionProperty);
+                $property = $property->withExamples(...$examples);
 
                 try {
-                    $property = $property->withDefault(
-                        self::propertyDefault($propertyName, $defaultProperties)
-                    );
-                } catch (Throwable $e) {
+                    $property = $property->withDefault(self::propertyDefault($defaultProperties, $propertyName));
+                } catch (Throwable) {
                 }
 
                 $properties[$propertyName] = $property;
@@ -123,39 +239,9 @@ trait JsonSchemaAwareRecordLogic
             return JsonSchema::schemaFromScalarPhpType($type, $isNullable);
         }
 
-        if ($type === ImmutableRecord::PHP_TYPE_ARRAY) {
-            $arrayPropItemTypeMap = self::arrayPropItemTypeMap();
-
-            if (! array_key_exists($propertyName, $arrayPropItemTypeMap)) {
-                throw new InvalidArgumentException(
-                    sprintf(
-                        'Missing array item type in array property map. ' .
-                        'Please provide an array item type for property %s.',
-                        $propertyName
-                    )
-                );
-            }
-
-            $arrayItemType = $arrayPropItemTypeMap[$propertyName];
-
-            if (self::isScalarType($arrayItemType)) {
-                $arrayItemSchema = JsonSchema::schemaFromScalarPhpType($arrayItemType, false);
-            } elseif ($arrayItemType === ImmutableRecord::PHP_TYPE_ARRAY) {
-                throw new InvalidArgumentException(
-                    sprintf(
-                        "Array item type of property %s must not be 'array', " .
-                        'only a scalar type or an existing class can be used as array item type.',
-                        $propertyName
-                    )
-                );
-            } else {
-                $arrayItemSchema = self::getTypeFromClass($arrayItemType);
-            }
-
-            $schema = JsonSchema::array($arrayItemSchema);
-        } else {
-            $schema = self::getTypeFromClass($type);
-        }
+        $schema = $type === ImmutableRecord::PHP_TYPE_ARRAY
+            ? self::schemaFromArrayProperty($propertyName)
+            : self::getTypeFromClass($type);
 
         if (! $isNullable) {
             return $schema;
@@ -164,77 +250,65 @@ trait JsonSchemaAwareRecordLogic
         return JsonSchema::nullOr($schema);
     }
 
-    private static function docBlockForProperty(string $propertyName): ?DocBlock
+    private static function schemaFromArrayProperty(string $propertyName): Type
     {
-        $reflectionProperty = (new ReflectionClass(static::class))->getProperty($propertyName);
-
-        if (! $reflectionProperty->getDocComment()) {
-            return null;
-        }
-
-        return DocBlockFactory::createInstance()->create($reflectionProperty);
-    }
-
-    private static function propertyDescription(string $propertyName): ?string
-    {
-        $docBlock = self::docBlockForProperty($propertyName);
-
-        if ($docBlock === null) {
-            return null;
-        }
-
-        $summary = $docBlock->getSummary();
-        $description = $docBlock->getDescription()->render();
-
-        if (empty($summary) && empty($description)) {
-            return null;
-        }
-
-        return implode(
-            '<br/>',
-            array_filter(
-                [
-                    $docBlock->getSummary(),
-                    $docBlock->getDescription()->render(),
-                ]
-            )
-        );
-    }
-
-    /**
-     * @return array<mixed>|null
-     */
-    private static function propertyExamples(string $propertyName): ?array
-    {
-        $examplesPerProperty = self::allExamples();
-
-        if ($examplesPerProperty[$propertyName] ?? false) {
-            $example = $examplesPerProperty[$propertyName];
-
-            if ($example instanceof ValueObject) {
-                $example = $example->toValue();
-            }
-
-            return [$example];
-        }
-
-        $docBlock = self::docBlockForProperty($propertyName);
-        $docBlockExamples = $docBlock ? $docBlock->getTagsByName('example') : null;
-
-        if (! empty($docBlockExamples)) {
-            return array_map(
-                static fn (Generic $generic) => StringUtil::castFromString($generic->getDescription()->render()),
-                $docBlockExamples
+        $arrayPropItemTypeMap = self::getArrayPropItemTypeMapFromMethodOrCache();
+        if (! array_key_exists($propertyName, $arrayPropItemTypeMap)) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Missing array item type in array property map. ' .
+                    'Please provide an array item type for property %s.',
+                    $propertyName,
+                ),
             );
         }
 
-        return null;
+        $arrayItemType = $arrayPropItemTypeMap[$propertyName];
+
+        if (self::isScalarType($arrayItemType)) {
+            return JsonSchema::array(JsonSchema::schemaFromScalarPhpType($arrayItemType, false));
+        }
+
+        if ($arrayItemType === ImmutableRecord::PHP_TYPE_ARRAY) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    "Array item type of property %s must not be 'array', " .
+                    'only a scalar type or an existing class can be used as array item type.',
+                    $propertyName,
+                ),
+            );
+        }
+
+        return JsonSchema::array(self::getTypeFromClass($arrayItemType));
     }
 
     /**
-     * @param array<string, mixed> $defaultProperties
+     * @param array<string, mixed> $examplesPerProperty
+     *
+     * @return array<mixed>
      */
-    public static function propertyDefault(string $propertyName, array $defaultProperties): mixed
+    private static function propertyExamples(
+        array $examplesPerProperty,
+        string $propertyName,
+        ReflectionProperty $reflectionProperty,
+    ): array {
+        $propertyExamples = [];
+
+        if ($examplesPerProperty[$propertyName] ?? false) {
+            $example = $examplesPerProperty[$propertyName];
+            $propertyExamples[] = $example instanceof ValueObject
+                ? $example->toValue()
+                : $example;
+        }
+
+        return array_merge(
+            $propertyExamples,
+            DocBlockFactory::examples($reflectionProperty),
+        );
+    }
+
+    /** @param array<string, mixed> $defaultProperties */
+    public static function propertyDefault(array $defaultProperties, string $propertyName): mixed
     {
         if (! isset($defaultProperties[$propertyName])) {
             throw new RuntimeException('default property not set.');
@@ -252,49 +326,7 @@ trait JsonSchemaAwareRecordLogic
         return TypeDetector::getTypeFromClass($classOrType, self::__allowNestedSchema());
     }
 
-    /**
-     * @return array<mixed>
-     */
-    private static function allExamples(): array
-    {
-        if ((new ReflectionClass(static::class))->implementsInterface(HasPropertyExamples::class)) {
-            return static::examples();
-        }
-
-        return [];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public static function defaultProperties(): array
-    {
-        $propertyNames = array_keys(self::buildPropTypeMap());
-        $defaultProperties = self::__defaultProperties();
-
-        if (! empty($defaultProperties) && ! ArrayUtil::isAssociative($defaultProperties)) {
-            throw new RuntimeException(
-                sprintf(
-                    'The __defaultProperties method from \'%s\', should be an associative array ' .
-                    'where the key is the property and the value is the default value.',
-                    static::class
-                )
-            );
-        }
-
-        return array_filter(
-            array_merge(
-                (new ReflectionClass(static::class))->getDefaultProperties(),
-                $defaultProperties
-            ),
-            static fn ($key) => in_array($key, $propertyNames),
-            ARRAY_FILTER_USE_KEY
-        );
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     private static function __defaultProperties(): array
     {
         return [];
@@ -312,33 +344,21 @@ trait JsonSchemaAwareRecordLogic
      *
      * @phpcsSuppress SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingNativeTypeHint
      */
-    public static function fromArray(array $nativeData, bool $useMaxValuesAsDefaults = false)
+    public static function fromArrayWithDefaultMaxValues(array $nativeData)
     {
-        if ($useMaxValuesAsDefaults && is_callable([static::class, 'maxValues'])) {
-            static::$__useMaxValues = true;
-            $nativeData = array_merge(static::maxValues(), $nativeData);
-        }
+        self::$__useMaxValues = true;
+        $nativeData = array_merge(self::maxValues(), $nativeData);
 
-        $camelCasedNativeData = ArrayUtil::toCamelCasedKeys($nativeData);
-        $propTypeMap = self::buildPropTypeMap();
-
-        $filteredAllowedProperties = array_intersect_key(
-            $camelCasedNativeData,
-            $propTypeMap
-        );
-
-        foreach ($filteredAllowedProperties as $key => $allowedProperty) {
-            $filteredAllowedProperties[$key] =  $allowedProperty instanceof ValueObject
-                ? $allowedProperty->toValue()
-                : $allowedProperty;
-        }
-
-        return self::parentFromArray($filteredAllowedProperties);
+        return self::fromArray($nativeData);
     }
 
-    /**
-     * @return array<mixed>
-     */
+    /** @return array<string, mixed> */
+    private static function maxValues(): array
+    {
+        return [];
+    }
+
+    /** @return array<mixed> */
     private static function buildPropTypeMap(): array
     {
         $propTypeMap = self::parentBuildPropTypeMap();
@@ -357,35 +377,19 @@ trait JsonSchemaAwareRecordLogic
         return array_keys(self::defaultProperties());
     }
 
-    /**
-     * @return array<string, string>
-     */
-    public static function __itemTypeMapping(): array
-    {
-        return static::arrayPropItemTypeMap();
-    }
-
     private function init(): void
     {
-        // phpcs:ignore Squiz.NamingConventions.ValidVariableName.NotCamelCaps
+        assert(is_array(self::$__propTypeMap));
+
+        // phpcs:disable Squiz.NamingConventions.ValidVariableName.NotCamelCaps
         foreach (self::$__propTypeMap as $key => [$type, $isNative, $isNullable]) {
-            if ($isNative) {
-                continue;
-            }
-
-            $specialKey = $key;
-
-            if ($this instanceof SpecialKeySupport) {
-                $specialKey = $this->convertKeyForArray($key);
-            }
-
-            if (isset($this->{$specialKey})) {
+            if ($isNative || isset($this->{$key})) {
                 continue;
             }
 
             try {
                 $reflectionType = new ReflectionClass($type);
-            } catch (ReflectionException $e) {
+            } catch (ReflectionException) {
                 continue;
             }
 
@@ -393,19 +397,31 @@ trait JsonSchemaAwareRecordLogic
                 continue;
             }
 
-            try {
-                // phpcs:ignore Squiz.NamingConventions.ValidVariableName.NotCamelCaps
-                $this->{$specialKey} = $type::fromArray([], self::$__useMaxValues);
-            } catch (InvalidArgumentException $exception) {
-                if ($isNullable) {
-                    $this->{$specialKey} = null;
-                } elseif (! preg_match('/^Missing record data for key/', $exception->getMessage())) {
-                    throw $exception;
-                }
-            }
+            $this->initProperty($key, $type, $isNullable);
         }
 
-        // phpcs:ignore Squiz.NamingConventions.ValidVariableName.NotCamelCaps
         self::$__useMaxValues = false;
     }
+
+    /** @param class-string<ImmutableRecord> $type */
+    public function initProperty(string $key, string $type, bool $isNullable): void
+    {
+        try {
+            $this->{$key} = self::$__useMaxValues && method_exists($type, 'fromArrayWithDefaultMaxValues')
+                ? $type::fromArrayWithDefaultMaxValues([])
+                : $type::fromArray([]);
+        } catch (InvalidArgumentException $exception) {
+            if ($isNullable) {
+                $this->{$key} = null;
+            } elseif (! str_starts_with($exception->getMessage(), 'Missing record data for key')) {
+                throw $exception;
+            }
+        }
+    }
+
+    /**
+     * @var ObjectType
+     * phpcs:disable
+     */
+    private static $__schema;
 }
