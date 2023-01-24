@@ -27,14 +27,15 @@ jobs:
             - name: Run PhpCs
               continue-on-error: true
               run: vendor/bin/phpcs
-            - uses: php-actions/phpstan@v3
+            - name: Run PhpStan
+              run: vendor/bin/phpstan analyze --no-progress --no-interaction --error-format=github
               continue-on-error: true
             - name: Run PhpMd
               continue-on-error: true
               run: vendor/bin/phpmd src text phpmd.xml
             - name: Run rector
               continue-on-error: true
-              run: vendor/bin/rector --dry-run
+              run: vendor/bin/rector --dry-run --no-progress-bar
             - uses: php-actions/phpunit@v3
               continue-on-error: true
               with:
