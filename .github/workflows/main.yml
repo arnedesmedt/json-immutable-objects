@@ -26,7 +26,7 @@ jobs:
               run: vendor/bin/phpstan analyze --no-progress --no-interaction --error-format=github
             - name: Run PhpMd
               run: vendor/bin/phpmd src text phpmd.xml
-            - name: Run rector
+            - name: Run Rector
               run: vendor/bin/rector --dry-run --no-progress-bar
             - uses: php-actions/phpunit@v3
               with:
