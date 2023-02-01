@@ -21,6 +21,7 @@ use ReflectionClass;
 use ReflectionException;
 use ReflectionProperty;
 use RuntimeException;
+use Symfony\Component\Yaml\Yaml;
 use Throwable;
 
 use function array_diff_key;
@@ -36,11 +37,13 @@ use function count;
 use function in_array;
 use function is_array;
 use function is_string;
+use function json_encode;
 use function method_exists;
 use function sprintf;
 use function str_starts_with;
 
 use const ARRAY_FILTER_USE_KEY;
+use const JSON_THROW_ON_ERROR;
 
 trait JsonSchemaAwareRecordLogic
 {
@@ -417,6 +420,16 @@ trait JsonSchemaAwareRecordLogic
                 throw $exception;
             }
         }
+    }
+
+    public function toJson(): string
+    {
+        return json_encode($this->toArray(), JSON_THROW_ON_ERROR);
+    }
+
+    public function toYaml(): string
+    {
+        return Yaml::dump($this->toArray());
     }
 
     /**
