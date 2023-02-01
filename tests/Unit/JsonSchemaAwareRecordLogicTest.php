@@ -152,7 +152,7 @@ class JsonSchemaAwareRecordLogicTest extends TestCase
         $json = $test->toJson();
 
         $this->assertJson($json);
-        $this->assertEquals(json_decode($json, true), $test->toArray());
+        $this->assertEquals(json_decode($json, true, 512, JSON_THROW_ON_ERROR), $test->toArray());
     }
 
     public function testFromJson(): void
