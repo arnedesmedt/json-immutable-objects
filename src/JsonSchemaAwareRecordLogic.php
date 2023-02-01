@@ -37,6 +37,7 @@ use function count;
 use function in_array;
 use function is_array;
 use function is_string;
+use function json_decode;
 use function json_encode;
 use function method_exists;
 use function sprintf;
@@ -422,9 +423,31 @@ trait JsonSchemaAwareRecordLogic
         }
     }
 
+    public static function fromJson(string $json): self
+    {
+        $nativeData = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+
+        if (! is_array($nativeData)) {
+            throw new RuntimeException('Invalid JSON data.');
+        }
+
+        return self::fromArray($nativeData);
+    }
+
     public function toJson(): string
     {
         return json_encode($this->toArray(), JSON_THROW_ON_ERROR);
+    }
+
+    public static function fromYaml(string $yaml): self
+    {
+        $nativeData = Yaml::parse($yaml);
+
+        if (! is_array($nativeData)) {
+            throw new RuntimeException('Invalid Yaml data.');
+        }
+
+        return self::fromArray($nativeData);
     }
 
     public function toYaml(): string

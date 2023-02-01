@@ -13,24 +13,29 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Yaml\Yaml;
 
 use function json_decode;
+use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
 
 class JsonSchemaAwareRecordLogicTest extends TestCase
 {
+    /** @return array<string, mixed> */
+    public function objectData(): array
+    {
+        return [
+            'test' => 'test',
+            'nonExistingProperty' => 'test',
+            'list' => ['test'],
+            'subObject' => ['test' => 'test'],
+            'subObjects' => [
+                ['test' => 'test'],
+            ],
+        ];
+    }
+
     public function objectToTest(): TestObject
     {
-        return TestObject::fromArray(
-            [
-                'test' => 'test',
-                'nonExistingProperty' => 'test',
-                'list' => ['test'],
-                'subObject' => ['test' => 'test'],
-                'subObjects' => [
-                    ['test' => 'test'],
-                ],
-            ],
-        );
+        return TestObject::fromArray($this->objectData());
     }
 
     public function testObjectRemovesNonUsedProperties(): void
@@ -150,11 +155,23 @@ class JsonSchemaAwareRecordLogicTest extends TestCase
         $this->assertEquals(json_decode($json, true, 512, JSON_THROW_ON_ERROR), $test->toArray());
     }
 
+    public function testFromJson(): void
+    {
+        $test = TestObject::fromJson(json_encode($this->objectData(), JSON_THROW_ON_ERROR));
+        $this->assertInstanceOf(TestObject::class, $test);
+    }
+
     public function testToYaml(): void
     {
         $test = $this->objectToTest();
         $yaml = $test->toYaml();
 
         $this->assertEquals(Yaml::parse($yaml), $test->toArray());
+    }
+
+    public function testFromYaml(): void
+    {
+        $test = TestObject::fromYaml(Yaml::dump($this->objectData()));
+        $this->assertInstanceOf(TestObject::class, $test);
     }
 }
