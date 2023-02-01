@@ -10,6 +10,11 @@ use ADS\JsonImmutableObjects\Tests\Object\TestObjectWithInvalidDefaultProperties
 use ADS\JsonImmutableObjects\Tests\Object\TestObjectWithNotListedArrayPropItem;
 use ADS\JsonImmutableObjects\Tests\Object\TestObjectWithSpecialKeySupport;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Yaml\Yaml;
+
+use function json_decode;
+
+use const JSON_THROW_ON_ERROR;
 
 class JsonSchemaAwareRecordLogicTest extends TestCase
 {
@@ -134,5 +139,22 @@ class JsonSchemaAwareRecordLogicTest extends TestCase
         $test = TestObjectWithInvalidDefaultProperties::fromArray(
             ['test' => 'test'],
         );
+    }
+
+    public function testToJson(): void
+    {
+        $test = $this->objectToTest();
+        $json = $test->toJson();
+
+        $this->assertJson($json);
+        $this->assertEquals(json_decode($json, true, 512, JSON_THROW_ON_ERROR), $test->toArray());
+    }
+
+    public function testToYaml(): void
+    {
+        $test = $this->objectToTest();
+        $yaml = $test->toYaml();
+
+        $this->assertEquals(Yaml::parse($yaml), $test->toArray());
     }
 }
