@@ -9,6 +9,7 @@ use ADS\JsonImmutableObjects\Tests\Object\TestObjectWithArrayAsArrayPropItem;
 use ADS\JsonImmutableObjects\Tests\Object\TestObjectWithInvalidDefaultProperties;
 use ADS\JsonImmutableObjects\Tests\Object\TestObjectWithNotListedArrayPropItem;
 use ADS\JsonImmutableObjects\Tests\Object\TestObjectWithSpecialKeySupport;
+use ADS\ValueObjects\Tests\Unit\ValueObject\String\TestString;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Yaml\Yaml;
 
@@ -24,6 +25,7 @@ class JsonSchemaAwareRecordLogicTest extends TestCase
     {
         return [
             'test' => 'test',
+            'testString' => TestString::fromString('test'),
             'nonExistingProperty' => 'test',
             'list' => ['test'],
             'subObject' => ['test' => 'test'],
@@ -31,6 +33,15 @@ class JsonSchemaAwareRecordLogicTest extends TestCase
                 ['test' => 'test'],
             ],
         ];
+    }
+
+    /** @return array<string, mixed> */
+    public function objectDataPlain(): array
+    {
+        $objectData = $this->objectData();
+        $objectData['testString'] = 'test';
+
+        return $objectData;
     }
 
     public function objectToTest(): TestObject
@@ -120,6 +131,7 @@ class JsonSchemaAwareRecordLogicTest extends TestCase
         $test = TestObject::fromArrayWithDefaultMaxValues(
             [
                 'test' => 'test',
+                'testString' => 'test',
                 'list' => ['test'],
             ],
         );
@@ -157,7 +169,7 @@ class JsonSchemaAwareRecordLogicTest extends TestCase
 
     public function testFromJson(): void
     {
-        $test = TestObject::fromJson(json_encode($this->objectData(), JSON_THROW_ON_ERROR));
+        $test = TestObject::fromJson(json_encode($this->objectDataPlain(), JSON_THROW_ON_ERROR));
         $this->assertInstanceOf(TestObject::class, $test);
     }
 
@@ -171,7 +183,7 @@ class JsonSchemaAwareRecordLogicTest extends TestCase
 
     public function testFromYaml(): void
     {
-        $test = TestObject::fromYaml(Yaml::dump($this->objectData()));
+        $test = TestObject::fromYaml(Yaml::dump($this->objectDataPlain()));
         $this->assertInstanceOf(TestObject::class, $test);
     }
 }

@@ -15,6 +15,7 @@ class FactoryFromArrayTest extends TestCase
         $test = TestObjectFactory::fromArray(
             [
                 'test' => 'test',
+                'testString' => 'test',
                 'nonExistingProperty' => 'test',
                 'list' => ['test'],
                 'subObject' => ['test' => 'test'],

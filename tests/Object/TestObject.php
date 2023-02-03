@@ -6,6 +6,7 @@ namespace ADS\JsonImmutableObjects\Tests\Object;
 
 use ADS\JsonImmutableObjects\HasPropertyExamples;
 use ADS\JsonImmutableObjects\JsonSchemaAwareRecordLogic;
+use ADS\ValueObjects\Tests\Unit\ValueObject\String\TestString;
 use EventEngine\JsonSchema\JsonSchemaAwareRecord;
 
 class TestObject implements JsonSchemaAwareRecord, HasPropertyExamples
@@ -14,6 +15,7 @@ class TestObject implements JsonSchemaAwareRecord, HasPropertyExamples
 
     /** Testdoc */
     private string $test;
+    private TestString $testString;
     /** @var array<string> */
     private array $list;
     private string|null $nullable = null;
