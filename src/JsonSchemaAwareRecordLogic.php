@@ -327,7 +327,9 @@ trait JsonSchemaAwareRecordLogic
 
     private static function getTypeFromClass(string $classOrType): Type
     {
-        return TypeDetector::getTypeFromClass($classOrType, self::__allowNestedSchema());
+        return self::__allowNestedSchema()
+            ? TypeDetector::typeFromClass($classOrType)
+            : TypeDetector::typeFromClassAsReference($classOrType);
     }
 
     /** @return array<string, mixed> */
