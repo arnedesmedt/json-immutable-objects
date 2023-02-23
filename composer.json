@@ -29,7 +29,11 @@
     },
     "autoload": {
         "psr-4": {
-            "ADS\\JsonImmutableObjects\\": "src/",
+            "ADS\\JsonImmutableObjects\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
             "ADS\\JsonImmutableObjects\\Tests\\": "tests/"
         }
     },
