@@ -9,7 +9,7 @@ use ADS\JsonImmutableObjects\Tests\Object\TestObjectWithArrayAsArrayPropItem;
 use ADS\JsonImmutableObjects\Tests\Object\TestObjectWithInvalidDefaultProperties;
 use ADS\JsonImmutableObjects\Tests\Object\TestObjectWithNotListedArrayPropItem;
 use ADS\JsonImmutableObjects\Tests\Object\TestObjectWithSpecialKeySupport;
-use ADS\ValueObjects\Tests\Unit\ValueObject\String\TestString;
+use ADS\JsonImmutableObjects\Tests\Object\TestStringVO;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Yaml\Yaml;
 
@@ -25,7 +25,7 @@ class JsonSchemaAwareRecordLogicTest extends TestCase
     {
         return [
             'test' => 'test',
-            'testString' => TestString::fromString('test'),
+            'testString' => TestStringVO::fromString('test'),
             'nonExistingProperty' => 'test',
             'list' => ['test'],
             'subObject' => ['test' => 'test'],
@@ -90,6 +90,14 @@ class JsonSchemaAwareRecordLogicTest extends TestCase
         $schema = $test::__schema()->toArray();
 
         $this->assertIsArray($schema['properties']['subObject']['examples'][0]);
+    }
+
+    public function testExamplesAreAddedViaValueObjectExamplesFunction(): void
+    {
+        $test   = $this->objectToTest();
+        $schema = $test::__schema()->toArray();
+
+        $this->assertIsString($schema['properties']['testString']['examples'][0]);
     }
 
     public function testSubImmutableRecord(): void

@@ -9,6 +9,7 @@ namespace ADS\JsonImmutableObjects;
 
 use ADS\Util\ArrayUtil;
 use ADS\ValueObjects\Implementation\TypeDetector;
+use ADS\ValueObjects\Util;
 use ADS\ValueObjects\ValueObject;
 use EventEngine\Data\ImmutableRecord;
 use EventEngine\Data\SpecialKeySupport;
@@ -22,7 +23,6 @@ use ReflectionException;
 use ReflectionProperty;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
-use Throwable;
 
 use function array_diff_key;
 use function array_filter;
@@ -211,18 +211,9 @@ trait JsonSchemaAwareRecordLogic
                 }
 
                 $reflectionProperty = (new ReflectionClass(static::class))->getProperty($propertyName);
-                $description = DocBlockFactory::summaryAndDescription($reflectionProperty);
-                $property = $description
-                    ? $property->describedAs($description)
-                    : $property;
-
-                $examples = self::propertyExamples($examplesPerProperty, $propertyName, $reflectionProperty);
-                $property = $property->withExamples(...$examples);
-
-                try {
-                    $property = $property->withDefault(self::propertyDefault($defaultProperties, $propertyName));
-                } catch (Throwable) {
-                }
+                $property = self::addPropertyDescription($property, $reflectionProperty);
+                $property = self::addPropertyExamples($property, $reflectionProperty, $examplesPerProperty);
+                $property = self::addPropertyDefaults($property, $defaultProperties, $propertyName);
 
                 $properties[$propertyName] = $property;
             }
@@ -286,18 +277,26 @@ trait JsonSchemaAwareRecordLogic
         return JsonSchema::array(self::getTypeFromClass($arrayItemType));
     }
 
-    /**
-     * @param array<string, mixed> $examplesPerProperty
-     *
-     * @return array<mixed>
-     */
-    private static function propertyExamples(
-        array $examplesPerProperty,
-        string $propertyName,
+    private static function addPropertyDescription(
+        AnnotatedType $property,
         ReflectionProperty $reflectionProperty,
-    ): array {
+    ): AnnotatedType {
+        $description = DocBlockFactory::summaryAndDescription($reflectionProperty);
+
+        return $description
+            ? $property->describedAs($description)
+            : $property;
+    }
+
+    /** @param array<string, mixed> $examplesPerProperty */
+    private static function addPropertyExamples(
+        AnnotatedType $property,
+        ReflectionProperty $reflectionProperty,
+        array $examplesPerProperty,
+    ): AnnotatedType {
         $propertyExamples = [];
 
+        $propertyName = $reflectionProperty->getName();
         if ($examplesPerProperty[$propertyName] ?? false) {
             $example = $examplesPerProperty[$propertyName];
             $propertyExamples[] = $example instanceof ValueObject
@@ -305,24 +304,26 @@ trait JsonSchemaAwareRecordLogic
                 : $example;
         }
 
-        return array_merge(
-            $propertyExamples,
-            DocBlockFactory::examples($reflectionProperty),
-        );
+        $propertyExamples = [...$propertyExamples, ...DocBlockFactory::examples($reflectionProperty)];
+
+        if (! empty($propertyExamples)) {
+            $property = $property->withExamples(...$propertyExamples);
+        }
+
+        return $property;
     }
 
     /** @param array<string, mixed> $defaultProperties */
-    public static function propertyDefault(array $defaultProperties, string $propertyName): mixed
-    {
+    private static function addPropertyDefaults(
+        AnnotatedType $property,
+        array $defaultProperties,
+        string $propertyName,
+    ): AnnotatedType {
         if (! isset($defaultProperties[$propertyName])) {
-            throw new RuntimeException('default property not set.');
+            return $property;
         }
 
-        $default = $defaultProperties[$propertyName];
-
-        return $default instanceof ValueObject ?
-            $default->toValue() :
-            $default;
+        return $property->withDefault(Util::toScalar($defaultProperties[$propertyName]));
     }
 
     private static function getTypeFromClass(string $classOrType): Type

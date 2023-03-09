@@ -60,16 +60,16 @@
         },
         {
             "name": "arnedesmedt/value-objects",
-            "version": "0.3.1",
+            "version": "0.3.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/arnedesmedt/value-objects.git",
-                "reference": "0e5051fdf71f6a2748fc3e6221bf8e85e97e8e6d"
+                "reference": "781290513e693bda4f0f59014436309891fde244"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/arnedesmedt/value-objects/zipball/0e5051fdf71f6a2748fc3e6221bf8e85e97e8e6d",
-                "reference": "0e5051fdf71f6a2748fc3e6221bf8e85e97e8e6d",
+                "url": "https://api.github.com/repos/arnedesmedt/value-objects/zipball/781290513e693bda4f0f59014436309891fde244",
+                "reference": "781290513e693bda4f0f59014436309891fde244",
                 "shasum": ""
             },
             "require": {
@@ -93,8 +93,7 @@
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "ADS\\ValueObjects\\": "src/",
-                    "ADS\\ValueObjects\\Tests\\": "tests/"
+                    "ADS\\ValueObjects\\": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -112,9 +111,9 @@
             "homepage": "https://github.com/arnedesmedt/value-objects",
             "support": {
                 "issues": "https://github.com/arnedesmedt/value-objects/issues",
-                "source": "https://github.com/arnedesmedt/value-objects/tree/0.3.1"
+                "source": "https://github.com/arnedesmedt/value-objects/tree/0.3.5"
             },
-            "time": "2023-02-16T09:10:45+00:00"
+            "time": "2023-02-23T11:00:32+00:00"
         },
         {
             "name": "brick/math",
