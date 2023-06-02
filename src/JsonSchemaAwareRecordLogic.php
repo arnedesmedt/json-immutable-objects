@@ -178,12 +178,21 @@ trait JsonSchemaAwareRecordLogic
         return [];
     }
 
+    public static function buildPropTypeMapIfEmpty(): void
+    {
+        if (self::$__propTypeMap !== null) {
+            return;
+        }
+
+        self::$__propTypeMap = self::buildPropTypeMap();
+    }
+
     /** @param array<mixed> $arrayPropTypeMap */
     private static function generateSchemaFromPropTypeMap(array $arrayPropTypeMap = []): Type\ObjectType
     {
-        if (self::$__propTypeMap === null) {
-            self::$__propTypeMap = self::buildPropTypeMap();
-        }
+        self::buildPropTypeMapIfEmpty();
+
+        assert(is_array(self::$__propTypeMap));
 
         //To keep BC, we cache arrayPropTypeMap internally.
         //New recommended way to provide the map is that
