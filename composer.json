@@ -14,7 +14,7 @@
     "require": {
         "php": "^8",
         "arnedesmedt/value-objects": "~0.1",
-        "event-engine/php-json-schema": "~2.0",
+        "event-engine/php-json-schema": "~3.0",
         "phpdocumentor/reflection-docblock": "~5.0",
         "symfony/yaml": "~6.0"
     },
