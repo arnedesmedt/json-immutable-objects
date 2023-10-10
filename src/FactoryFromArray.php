@@ -16,4 +16,10 @@ trait FactoryFromArray
     {
         return self::modelClass()::fromArray($array);
     }
+
+    /** @param array<string, mixed> $array */
+    public static function fromRecordData(array $array): mixed
+    {
+        return self::modelClass()::fromRecordData($array);
+    }
 }
