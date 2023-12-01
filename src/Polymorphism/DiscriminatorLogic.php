@@ -8,6 +8,7 @@ use ADS\JsonImmutableObjects\JsonSchemaAwareRecordLogic;
 use EventEngine\Data\ImmutableRecord;
 use EventEngine\JsonSchema\JsonSchema;
 use EventEngine\JsonSchema\JsonSchemaAwareRecord;
+use EventEngine\JsonSchema\Type\ObjectType;
 use EventEngine\JsonSchema\Type\StringType;
 use EventEngine\Schema\TypeSchema;
 use InvalidArgumentException;
@@ -29,7 +30,7 @@ use function sprintf;
 
 /**
  * @method static string propertyName()
- * @method static array jsonSchemaAwareRecords()
+ * @method static array<class-string<JsonSchemaAwareRecord>> jsonSchemaAwareRecords()
  */
 trait DiscriminatorLogic
 {
@@ -191,6 +192,7 @@ trait DiscriminatorLogic
                                 return null;
                             }
 
+                            /** @var ObjectType $schema */
                             $schema = $class::__schema();
 
                             return $schema->withMergedRequiredProps(
