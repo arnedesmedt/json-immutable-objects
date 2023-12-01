@@ -17,6 +17,7 @@ use EventEngine\JsonSchema\JsonSchema;
 use EventEngine\JsonSchema\Type;
 use EventEngine\JsonSchema\Type\ObjectType;
 use InvalidArgumentException;
+use LogicException;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionProperty;
@@ -58,6 +59,9 @@ trait JsonSchemaAwareRecordLogic
     private static bool $__useMaxValues = false;
 
     /**
+     * Overwritten to convert value objects to native data
+     * before sending them to the parent fromArray method.
+     *
      * @param array<mixed> $nativeData
      *
      * @return self
@@ -66,7 +70,6 @@ trait JsonSchemaAwareRecordLogic
      */
     public static function fromArray(array $nativeData)
     {
-        // Convert value objects to native data.
         return self::parentFromArray(
             array_map(
                 static fn ($value) => ValueObjectUtil::toScalar($value) ?? $value,
@@ -75,7 +78,13 @@ trait JsonSchemaAwareRecordLogic
         );
     }
 
-    /** @param array<string, mixed> $nativeData */
+    /**
+     * Filter out the not allowed properties
+     * Convert the keys to camel case.
+     * And set the default properties.
+     *
+     * @param array<string, mixed> $nativeData
+     */
     private function setNativeData(array $nativeData): void
     {
         assert(is_array(self::$__propTypeMap));
@@ -90,12 +99,17 @@ trait JsonSchemaAwareRecordLogic
         $this->addDefaultProperties();
     }
 
-    /** @param array<string, mixed> $recordData */
+    /**
+     * Filter out the not allowed properties
+     * Convert the keys to camel case.
+     * And set the default properties.
+     *
+     * @param array<string, mixed> $recordData
+     */
     private function setRecordData(array $recordData): void
     {
         assert(is_array(self::$__propTypeMap));
 
-        // Filter not allowed properties.
         $filteredRecordData = array_intersect_key(
             $this->convertKeys($recordData),
             self::$__propTypeMap,
@@ -111,7 +125,7 @@ trait JsonSchemaAwareRecordLogic
 
         foreach ($defaultProperties as $property => $defaultValue) {
             if (! is_string($property)) {
-                throw new RuntimeException(
+                throw new LogicException(
                     sprintf(
                         'The __defaultProperties method from \'%s\', should be an associative array' .
                         'where the key is the property and the value is the default value. Found key \'%d\'.',
@@ -151,10 +165,14 @@ trait JsonSchemaAwareRecordLogic
         return $dataWithConvertedKeys;
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * Combine the __defaultProperties method with the php properties that have a default value.
+     *
+     * @return array<string, mixed>
+     */
     public static function defaultProperties(): array
     {
-        $propertyNames     = array_keys(self::buildPropTypeMap());
+        $propertyNames     = array_keys(static::buildPropTypeMap());
         $defaultProperties = self::__defaultProperties();
 
         return array_filter(
@@ -181,7 +199,7 @@ trait JsonSchemaAwareRecordLogic
     private static function generateSchemaFromPropTypeMap(array $arrayPropTypeMap = []): Type\ObjectType
     {
         if (self::$__propTypeMap === null) {
-            self::$__propTypeMap = self::buildPropTypeMap();
+            self::$__propTypeMap = static::buildPropTypeMap();
         }
 
         //To keep BC, we cache arrayPropTypeMap internally.
