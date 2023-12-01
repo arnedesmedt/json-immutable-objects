@@ -96,6 +96,7 @@ trait JsonSchemaAwareRecordLogic
         );
 
         $this->parentSetNativeData($filteredNativeData);
+        $this->parentSetNativeData($filteredNativeData);
         $this->addDefaultProperties();
     }
 
@@ -172,7 +173,7 @@ trait JsonSchemaAwareRecordLogic
      */
     public static function defaultProperties(): array
     {
-        $propertyNames     = array_keys(static::buildPropTypeMap());
+        $propertyNames     = array_keys(self::buildPropTypeMap());
         $defaultProperties = self::__defaultProperties();
 
         return array_filter(
@@ -199,7 +200,7 @@ trait JsonSchemaAwareRecordLogic
     private static function generateSchemaFromPropTypeMap(array $arrayPropTypeMap = []): Type\ObjectType
     {
         if (self::$__propTypeMap === null) {
-            self::$__propTypeMap = static::buildPropTypeMap();
+            self::$__propTypeMap = self::buildPropTypeMap();
         }
 
         //To keep BC, we cache arrayPropTypeMap internally.

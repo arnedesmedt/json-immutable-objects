@@ -6,8 +6,6 @@ parameters:
     excludePaths:
         analyse:
             - tests/Object/TestObjectWithInvalidDefaultProperties.php
-    ignoreErrors:
-        - '#through static::#'
 services:
     -
         class: ADS\JsonImmutableObjects\PhpStan\PropertiesExtension
