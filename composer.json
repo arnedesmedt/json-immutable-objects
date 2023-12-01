@@ -13,12 +13,12 @@
     ],
     "require": {
         "php": "^8",
-        "arnedesmedt/value-objects": "~0.1",
         "event-engine/php-json-schema": "~3.0",
         "phpdocumentor/reflection-docblock": "~5.0",
         "symfony/yaml": "~6.0"
     },
     "require-dev" : {
+        "arnedesmedt/value-objects": "~0.1",
         "doctrine/coding-standard": "~11.0",
         "phpmd/phpmd": "~2.0",
         "phpro/grumphp": "~1.0",

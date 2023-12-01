@@ -8,9 +8,8 @@ declare(strict_types=1);
 namespace ADS\JsonImmutableObjects;
 
 use ADS\Util\ArrayUtil;
-use ADS\ValueObjects\Implementation\TypeDetector;
-use ADS\ValueObjects\Util;
-use ADS\ValueObjects\ValueObject;
+use ADS\Util\ScalarUtil;
+use ADS\Util\ValueObjectUtil;
 use EventEngine\Data\ImmutableRecord;
 use EventEngine\Data\SpecialKeySupport;
 use EventEngine\JsonSchema\AnnotatedType;
@@ -70,7 +69,7 @@ trait JsonSchemaAwareRecordLogic
         // Convert value objects to native data.
         return self::parentFromArray(
             array_map(
-                static fn ($value) => $value instanceof ValueObject ? $value->toValue() : $value,
+                static fn ($value) => ValueObjectUtil::toScalar($value) ?? $value,
                 $nativeData,
             ),
         );
@@ -299,9 +298,7 @@ trait JsonSchemaAwareRecordLogic
         $propertyName = $reflectionProperty->getName();
         if ($examplesPerProperty[$propertyName] ?? false) {
             $example = $examplesPerProperty[$propertyName];
-            $propertyExamples[] = $example instanceof ValueObject
-                ? $example->toValue()
-                : $example;
+            $propertyExamples[] = ValueObjectUtil::toScalar($example) ?? $example;
         }
 
         $propertyExamples = [...$propertyExamples, ...DocBlockFactory::examples($reflectionProperty)];
@@ -323,7 +320,7 @@ trait JsonSchemaAwareRecordLogic
             return $property;
         }
 
-        return $property->withDefault(Util::toScalar($defaultProperties[$propertyName]));
+        return $property->withDefault(ScalarUtil::toScalar($defaultProperties[$propertyName]));
     }
 
     private static function getTypeFromClass(string $classOrType): Type
