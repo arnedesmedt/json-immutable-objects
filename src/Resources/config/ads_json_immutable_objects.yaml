@@ -1,0 +1,2 @@
+services:
+    ADS\Util\MetadataExtractor\JsonSchemaExtractor: ~
