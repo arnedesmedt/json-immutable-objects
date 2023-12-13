@@ -17,7 +17,7 @@ class ADSJsonImmutableObjectsBundle extends AbstractBundle
     {
         $loader = new YamlFileLoader(
             $builder,
-            new FileLocator(__DIR__ . '/../Resources/config'),
+            new FileLocator(__DIR__ . '/Resources/config'),
         );
 
         $loader->load('ads_json_immutable_objects.yaml');
