@@ -16,6 +16,12 @@ use function sprintf;
 
 class JsonSchemaExtractor
 {
+    /** @param class-string<object> $class */
+    public function fromClass(string $class): TypeSchema
+    {
+        return $this->fromReflectionClass(new ReflectionClass($class));
+    }
+
     /** @param ReflectionClass<object> $reflectionClass */
     public function fromReflectionClass(
         ReflectionClass $reflectionClass,

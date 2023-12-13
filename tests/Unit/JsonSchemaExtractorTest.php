@@ -39,6 +39,20 @@ class JsonSchemaExtractorTest extends TestCase
         $this->assertInstanceOf(ArrayType::class, $schema);
     }
 
+    public function testRecordFromClass(): void
+    {
+        $schema = $this->jsonSchemaExtractor->fromClass(TestImmutable::class);
+
+        $this->assertInstanceOf(ObjectType::class, $schema);
+    }
+
+    public function testCollectionFromClass(): void
+    {
+        $schema = $this->jsonSchemaExtractor->fromClass(TestCollection::class);
+
+        $this->assertInstanceOf(ArrayType::class, $schema);
+    }
+
     public function testNonExistingSchemaExtractor(): void
     {
         $this->expectExceptionMessage(
