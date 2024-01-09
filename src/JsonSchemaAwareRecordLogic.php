@@ -442,7 +442,7 @@ trait JsonSchemaAwareRecordLogic
         }
     }
 
-    public function create(): self
+    public static function create(): self
     {
         return self::fromArray([]);
     }
