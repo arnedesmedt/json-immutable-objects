@@ -442,6 +442,11 @@ trait JsonSchemaAwareRecordLogic
         }
     }
 
+    public function create(): self
+    {
+        return self::fromArray([]);
+    }
+
     public static function fromJson(string $json): self
     {
         $nativeData = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
