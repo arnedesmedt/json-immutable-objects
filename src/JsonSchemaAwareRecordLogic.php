@@ -350,7 +350,7 @@ trait JsonSchemaAwareRecordLogic
     }
 
     /** @return array<string, mixed> */
-    private static function __defaultProperties(): array
+    public static function __defaultProperties(): array
     {
         return [];
     }
