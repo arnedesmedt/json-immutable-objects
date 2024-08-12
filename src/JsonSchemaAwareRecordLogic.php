@@ -24,7 +24,6 @@ use ReflectionProperty;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
-use TeamBlue\Common\Caas\Config\ValueObject\Password;
 use function array_diff_key;
 use function array_filter;
 use function array_flip;
