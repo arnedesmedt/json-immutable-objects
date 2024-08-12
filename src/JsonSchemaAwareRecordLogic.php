@@ -24,6 +24,7 @@ use ReflectionProperty;
 use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
+use TeamBlue\Common\Caas\Config\ValueObject\Password;
 use function array_diff_key;
 use function array_filter;
 use function array_flip;
@@ -53,10 +54,45 @@ trait JsonSchemaAwareRecordLogic
         setNativeData as parentSetNativeData;
         setRecordData as parentSetRecordData;
         buildPropTypeMap as parentBuildPropTypeMap;
+        voTypeToNative as parentVoTypeToNative;
+        toArray as eventEngineParentToArray;
     }
+
+    private static bool $__toPlainText = false;
 
     // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
     private static bool $__useMaxValues = false;
+
+    public function setToPlainText(bool $toPlainText): self
+    {
+        $new = clone $this;
+        $new::$__toPlainText = $toPlainText;
+
+        return $new;
+    }
+
+    public function toArray(): array
+    {
+        if($this::$__toPlainText === true) {
+            foreach (self::$__propTypeMap as $key => [$type, $isNative, $isNullable]) {
+                $object = $this->{$key};
+                if ($object instanceof ImmutableRecord && method_exists($object, 'setToPlainText')) {
+                    $object->setToPlainText($this::$__toPlainText);
+                }
+            }
+        }
+
+        return $this->eventEngineParentToArray();
+    }
+
+    private function voTypeToNative($value, string $key, string $type)
+    {
+        if ($this::$__toPlainText && \method_exists($value, 'toPlainString')) {
+            return $value->toPlainString();
+        }
+
+        return $this->parentVoTypeToNative($value, $key, $type);
+    }
 
     /**
      * Overwritten to convert value objects to native data
@@ -386,6 +422,7 @@ trait JsonSchemaAwareRecordLogic
     {
         $propTypeMap = self::parentBuildPropTypeMap();
         unset($propTypeMap['__useMaxValues']);
+        unset($propTypeMap['__toPlainText']);
 
         return $propTypeMap;
     }
