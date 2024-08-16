@@ -50,36 +50,21 @@ trait JsonSchemaAwareRecordLogic
 {
     use \EventEngine\JsonSchema\JsonSchemaAwareRecordLogic {
         fromArray as parentFromArray;
-        setNativeData as parentSetNativeData;
         setRecordData as parentSetRecordData;
-        buildPropTypeMap as parentBuildPropTypeMap;
+    }
+    use ImmutableRecordLogic {
+        ImmutableRecordLogic::fromType insteadof \EventEngine\JsonSchema\JsonSchemaAwareRecordLogic;
+        ImmutableRecordLogic::voTypeToNative insteadof \EventEngine\JsonSchema\JsonSchemaAwareRecordLogic;
+        ImmutableRecordLogic::setNativeData as parentSetNativeData;
+        ImmutableRecordLogic::buildPropTypeMap as parentImmutableRecordBuildPropTypeMap;
     }
 
     // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
     private static bool $__useMaxValues = false;
 
     /**
-     * Overwritten to convert value objects to native data
-     * before sending them to the parent fromArray method.
-     *
-     * @param array<mixed> $nativeData
-     *
-     * @return self
-     *
-     * @phpcsSuppress SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingNativeTypeHint
-     */
-    public static function fromArray(array $nativeData)
-    {
-        return self::parentFromArray(
-            array_map(
-                static fn ($value) => ValueObjectUtil::toScalar($value) ?? $value,
-                $nativeData,
-            ),
-        );
-    }
-
-    /**
-     * Filter out the not allowed properties
+     * Convert value objects to native data
+     * Filter out the not allowed properties.
      * Convert the keys to camel case.
      * And set the default properties.
      *
@@ -88,6 +73,11 @@ trait JsonSchemaAwareRecordLogic
     private function setNativeData(array $nativeData): void
     {
         assert(is_array(self::$__propTypeMap));
+
+        $nativeData = array_map(
+            static fn ($value) => ValueObjectUtil::toScalar($value) ?? $value,
+            $nativeData,
+        );
 
         // Filter not allowed properties.
         $filteredNativeData = array_intersect_key(
@@ -215,12 +205,13 @@ trait JsonSchemaAwareRecordLogic
             $defaultProperties = self::defaultProperties();
             $examplesPerProperty = self::allExamples();
 
-            foreach (self::$__propTypeMap as $propertyName => [$type, $isScalar, $isNullable]) {
+            foreach (self::$__propTypeMap as $propertyName => [$type, $isScalar, $isNullable, $isSensitive]) {
                 $properties[$propertyName] = $property = self::baseProperty(
                     $propertyName,
                     $type,
                     $isScalar,
                     $isNullable,
+                    $isSensitive,
                 );
 
                 if (! $property instanceof AnnotatedType) {
@@ -245,8 +236,13 @@ trait JsonSchemaAwareRecordLogic
         return self::$__schema;
     }
 
-    private static function baseProperty(string $propertyName, string $type, bool $isScalar, bool $isNullable): Type
-    {
+    private static function baseProperty(
+        string $propertyName,
+        string $type,
+        bool $isScalar,
+        bool $isNullable,
+        bool $isSensitive,
+    ): Type {
         if ($isScalar) {
             return JsonSchema::schemaFromScalarPhpType($type, $isNullable);
         }
@@ -380,10 +376,15 @@ trait JsonSchemaAwareRecordLogic
         return [];
     }
 
-    /** @return array<mixed> */
+    /**
+     * Unset use max values.
+     *
+     * @return array<mixed>
+     */
     private static function buildPropTypeMap(): array
     {
-        $propTypeMap = self::parentBuildPropTypeMap();
+        $propTypeMap = self::parentImmutableRecordBuildPropTypeMap();
+
         unset($propTypeMap['__useMaxValues']);
 
         return $propTypeMap;
