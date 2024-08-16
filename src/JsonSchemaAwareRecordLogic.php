@@ -96,7 +96,6 @@ trait JsonSchemaAwareRecordLogic
         );
 
         $this->parentSetNativeData($filteredNativeData);
-        $this->parentSetNativeData($filteredNativeData);
         $this->addDefaultProperties();
     }
 
