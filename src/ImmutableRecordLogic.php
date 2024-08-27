@@ -191,6 +191,8 @@ trait ImmutableRecordLogic
     /** @return array<string, mixed> */
     public function toSensitiveEncryptedArray(): array
     {
+        self::$__encryptedSensitiveData = true;
+
         $nativeData = [];
         $arrayPropItemTypeMap = self::getArrayPropItemTypeMapFromMethodOrCache();
 
@@ -246,12 +248,14 @@ trait ImmutableRecordLogic
             $nativeData[$specialKey] = EncryptDecryptService::encrypt($nativeData[$specialKey]);
         }
 
+        self::$__encryptedSensitiveData = false;
+
         return $nativeData;
     }
 
     private function voTypeToNative(mixed $value, string $key, string $type): mixed
     {
-        if (method_exists($value, 'toSensitiveEncryptedArray')) {
+        if (self::$__encryptedSensitiveData && method_exists($value, 'toSensitiveEncryptedArray')) {
             return $value->toSensitiveEncryptedArray();
         }
 

@@ -52,7 +52,7 @@ trait JsonSchemaAwareRecordLogic
     use ImmutableRecordLogic {
         ImmutableRecordLogic::fromType insteadof \EventEngine\JsonSchema\JsonSchemaAwareRecordLogic;
         ImmutableRecordLogic::voTypeToNative insteadof \EventEngine\JsonSchema\JsonSchemaAwareRecordLogic;
-        ImmutableRecordLogic::setRecordData insteadof \EventEngine\JsonSchema\JsonSchemaAwareRecordLogic;
+        ImmutableRecordLogic::setRecordData as parentSetRecordData;
         ImmutableRecordLogic::setNativeData as parentSetNativeData;
         ImmutableRecordLogic::buildPropTypeMap as parentImmutableRecordBuildPropTypeMap;
     }
