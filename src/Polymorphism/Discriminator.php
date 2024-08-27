@@ -15,6 +15,9 @@ interface Discriminator extends JsonSchemaAwareRecord
     /** @param array<string, mixed> $nativeData */
     public static function fromArray(array $nativeData): self;
 
+    /** @param array<string, mixed> $nativeData */
+    public static function fromEncryptedSensitiveData(array $nativeData): self;
+
     public function value(): ImmutableRecord;
 
     public static function propertyName(): string;
@@ -27,6 +30,9 @@ interface Discriminator extends JsonSchemaAwareRecord
 
     /** @return array<string, mixed> */
     public function toArray(): array;
+
+    /** @return array<string, mixed> */
+    public function toSensitiveEncryptedArray(): array;
 
     /** @param array<string, mixed> $recordData */
     public function with(array $recordData): self;

@@ -78,6 +78,21 @@ trait DiscriminatorLogic
         return self::parentFromRecordData(['value' => $immutableRecordClass::fromArray($nativeData)]);
     }
 
+    /** @inheritDoc */
+    public static function fromEncryptedSensitiveData(array $nativeData): self
+    {
+        $propertyValue        = self::propertyValue($nativeData);
+        $immutableRecordClass = self::immutableRecordClass($propertyValue);
+
+        return self::parentFromRecordData(
+            [
+                'value' => method_exists($immutableRecordClass, 'fromEncryptedSensitiveData')
+                    ? $immutableRecordClass::fromEncryptedSensitiveData($nativeData)
+                    : $immutableRecordClass::fromArray($nativeData),
+            ],
+        );
+    }
+
     /** @param array<string, mixed> $data */
     private static function propertyValue(array $data): string
     {
@@ -174,6 +189,14 @@ trait DiscriminatorLogic
     public function toArray(): array
     {
         return $this->value->toArray();
+    }
+
+    /** @inheritdoc  */
+    public function toSensitiveEncryptedArray(): array
+    {
+        return method_exists($this->value, 'toSensitiveEncryptedArray')
+            ? $this->value->toSensitiveEncryptedArray()
+            : $this->value->toArray();
     }
 
     public function equals(ImmutableRecord|Discriminator $other): bool
