@@ -126,12 +126,12 @@ trait ImmutableRecordLogic
                 continue;
             }
 
+            if (gettype($val) === 'string' && $isSensitive) {
+                $val = EncryptDecryptService::decrypt($val);
+            }
+
             switch ($type) {
                 case ImmutableRecord::PHP_TYPE_STRING:
-                    $recordData[$key] = $isSensitive
-                        ? EncryptDecryptService::decrypt($val)
-                        : $val;
-                    break;
                 case ImmutableRecord::PHP_TYPE_INT:
                 case ImmutableRecord::PHP_TYPE_FLOAT:
                 case ImmutableRecord::PHP_TYPE_BOOL:
