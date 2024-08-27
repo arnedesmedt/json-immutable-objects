@@ -177,7 +177,7 @@ trait ImmutableRecordLogic
      *
      * @phpcsSuppress SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingNativeTypeHint
      */
-    private static function fromEncryptedSensitiveData(array $nativeData)
+    public static function fromEncryptedSensitiveData(array $nativeData)
     {
         self::$__encryptedSensitiveData = true;
 
