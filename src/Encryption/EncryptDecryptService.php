@@ -32,17 +32,11 @@ use const SODIUM_CRYPTO_SECRETBOX_NONCEBYTES;
 final class EncryptDecryptService
 {
     public const ENVIRONMENT_SECRET_KEY_KEY = 'ADS_SECRET_KEY';
-    public const ENVIRONMENT_DISABLE_ENCRYPTING_KEY = 'ADS_DISABLE_ENCRYPTING';
-    public const ENVIRONMENT_DISABLE_ENCRYPTING_VALUE = 'disable-it-in-tests-only!';
 
     public const ENVIRONMENT_SECRET_KEY_REQUIRED_BYTES_LENGTH = SODIUM_CRYPTO_SECRETBOX_KEYBYTES;
 
     public static function encrypt(string $message): string
     {
-        if (! self::encryptingIsAllowed()) {
-            return base64_encode($message);
-        }
-
         $key = self::secretKey();
 
         $nonce = random_bytes(
@@ -65,10 +59,6 @@ final class EncryptDecryptService
 
     public static function decrypt(string $encrypted): string
     {
-        if (! self::encryptingIsAllowed()) {
-            return base64_decode($encrypted);
-        }
-
         $key = self::secretKey();
         /** @var string|false $decoded */
         $decoded = base64_decode($encrypted, true);
@@ -122,10 +112,5 @@ final class EncryptDecryptService
         }
 
         return $binarySecretKey;
-    }
-
-    private static function encryptingIsAllowed(): bool
-    {
-        return ($_ENV[self::ENVIRONMENT_DISABLE_ENCRYPTING_KEY] ?? null) !== self::ENVIRONMENT_DISABLE_ENCRYPTING_VALUE;
     }
 }

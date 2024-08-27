@@ -48,13 +48,11 @@ use const JSON_THROW_ON_ERROR;
 
 trait JsonSchemaAwareRecordLogic
 {
-    use \EventEngine\JsonSchema\JsonSchemaAwareRecordLogic {
-        fromArray as parentFromArray;
-        setRecordData as parentSetRecordData;
-    }
+    use \EventEngine\JsonSchema\JsonSchemaAwareRecordLogic;
     use ImmutableRecordLogic {
         ImmutableRecordLogic::fromType insteadof \EventEngine\JsonSchema\JsonSchemaAwareRecordLogic;
         ImmutableRecordLogic::voTypeToNative insteadof \EventEngine\JsonSchema\JsonSchemaAwareRecordLogic;
+        ImmutableRecordLogic::setRecordData insteadof \EventEngine\JsonSchema\JsonSchemaAwareRecordLogic;
         ImmutableRecordLogic::setNativeData as parentSetNativeData;
         ImmutableRecordLogic::buildPropTypeMap as parentImmutableRecordBuildPropTypeMap;
     }

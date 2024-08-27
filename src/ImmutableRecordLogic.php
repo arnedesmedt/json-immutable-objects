@@ -61,19 +61,17 @@ trait ImmutableRecordLogic
             $type = $reflectionProperty->getType();
 
             if (! $type instanceof ReflectionNamedType) {
+                array_push($value, false); // isSensitive = false
                 continue;
             }
 
             $typeClass = $type->getName();
 
-            if (
-                ! class_exists($typeClass)
-                || ! (new ReflectionClass($typeClass))->implementsInterface(SensitiveValue::class)
-            ) {
-                continue;
-            }
-
-            array_push($value, true); // isSensitive = true
+            array_push(
+                $value,
+                class_exists($typeClass)
+                && (new ReflectionClass($typeClass))->implementsInterface(SensitiveValue::class),
+            );
         }
 
         unset($propTypeMap['__encryptedSensitiveData']);
