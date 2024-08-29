@@ -19,24 +19,37 @@ use function random_bytes;
 use function sodium_crypto_secretbox;
 use function sodium_crypto_secretbox_open;
 use function sodium_memzero;
+use function str_ends_with;
+use function str_starts_with;
+use function strlen;
+use function substr;
 
 use const SODIUM_CRYPTO_SECRETBOX_KEYBYTES;
 use const SODIUM_CRYPTO_SECRETBOX_MACBYTES;
 use const SODIUM_CRYPTO_SECRETBOX_NONCEBYTES;
 
-/**
- * @see https://stackoverflow.com/questions/34477643/how-to-encrypt-decrypt-aes-with-libsodium-php
- *
- * @SuppressWarnings(PHPMD.Superglobals)
- */
+/** @see https://stackoverflow.com/questions/34477643/how-to-encrypt-decrypt-aes-with-libsodium-php */
 final class EncryptDecryptService
 {
     public const ENVIRONMENT_SECRET_KEY_KEY = 'ADS_SECRET_KEY';
+    public const ENVIRONMENT_DISABLE_ENCRYPTING_KEY = 'ADS_DISABLE_ENCRYPTING';
+    public const ENVIRONMENT_DISABLE_ENCRYPTING_VALUE = 'disable-it-in-tests-only!';
+
+    public const ENCRYPTED_PREFIX = '<ADS_ENC>';
+    public const ENCRYPTED_SUFFIX = '</ADS_ENC>';
 
     public const ENVIRONMENT_SECRET_KEY_REQUIRED_BYTES_LENGTH = SODIUM_CRYPTO_SECRETBOX_KEYBYTES;
 
     public static function encrypt(string $message): string
     {
+        if (self::isSupportedEncryptedString($message)) {
+            return $message;
+        }
+
+        if (! self::encryptingIsAllowed()) {
+            return self::wrapWithPrefixAndSuffix(base64_encode($message));
+        }
+
         $key = self::secretKey();
 
         $nonce = random_bytes(
@@ -54,11 +67,22 @@ final class EncryptDecryptService
         sodium_memzero($message);
         sodium_memzero($key);
 
-        return $cipher;
+        return self::wrapWithPrefixAndSuffix($cipher);
     }
 
-    public static function decrypt(string $encrypted): string
+    public static function decrypt(string $encryptedWithPrefixAndSuffix): string
     {
+        if (! self::isSupportedEncryptedString($encryptedWithPrefixAndSuffix)) {
+            return $encryptedWithPrefixAndSuffix;
+        }
+
+        $encryptedWithSuffix = substr($encryptedWithPrefixAndSuffix, strlen(self::ENCRYPTED_PREFIX));
+        $encrypted = substr($encryptedWithSuffix, 0, -strlen(self::ENCRYPTED_SUFFIX));
+
+        if (! self::encryptingIsAllowed()) {
+            return base64_decode($encrypted);
+        }
+
         $key = self::secretKey();
         /** @var string|false $decoded */
         $decoded = base64_decode($encrypted, true);
@@ -112,5 +136,20 @@ final class EncryptDecryptService
         }
 
         return $binarySecretKey;
+    }
+
+    private static function isSupportedEncryptedString(string $message): bool
+    {
+        return str_starts_with($message, self::ENCRYPTED_PREFIX) && str_ends_with($message, self::ENCRYPTED_SUFFIX);
+    }
+
+    private static function encryptingIsAllowed(): bool
+    {
+        return ($_ENV[self::ENVIRONMENT_DISABLE_ENCRYPTING_KEY] ?? null) !== self::ENVIRONMENT_DISABLE_ENCRYPTING_VALUE;
+    }
+
+    public static function wrapWithPrefixAndSuffix(string $string): string
+    {
+        return self::ENCRYPTED_PREFIX . $string . self::ENCRYPTED_SUFFIX;
     }
 }
