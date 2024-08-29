@@ -14,6 +14,7 @@
     "require": {
         "php": "^8.0 || ^8.1 || ^8.2 || ^8.3",
         "ext-sodium": "*",
+        "ext-mbstring": "*",
         "event-engine/php-json-schema": "~3.0",
         "phpdocumentor/reflection-docblock": "~5.0",
         "symfony/yaml": "~6.0 || ~7.0",
